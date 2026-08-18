@@ -8,7 +8,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Desk Setup Pro")
+app = FastAPI(title="Desk Setup Master Pro V2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,22 +22,26 @@ HISTORY_FILE = "price_history_master.json"
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
+# 모든 기존 제품 원상복구 완료
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
     {"id": 3, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono DM40 Pro", "query": "마오노 DM40 Pro", "global_query": "Maono DM40 Pro", "base_price": 139000, "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
-    {"id": 4, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "오디오 인터페이스", "name": "Maonocaster G1 NEO", "query": "마오노 G1 NEO", "global_query": "Maonocaster G1 NEO", "base_price": 63850, "image": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800", "icon": "fa-sliders"},
-    {"id": 5, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "키보드/스트림덱", "name": "Elgato Stream Deck Neo", "query": "엘가토 스트림덱 네오", "global_query": "Elgato Stream Deck Neo", "base_price": 133300, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800", "icon": "fa-keyboard"},
-    {"id": 6, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "사무용", "sub_group": "마우스", "name": "Logitech MX Master 3S", "query": "로지텍 MX 마스터 3S", "global_query": "Logitech MX Master 3S", "base_price": 139000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
-    {"id": 7, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "edifier mr4", "global_query": "Edifier MR4", "base_price": 76410, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
-    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "포터블 모니터", "name": "Zeuslap Z16P", "query": "제우스랩 Z16P", "global_query": "Zeuslap Z16P", "base_price": 150700, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800", "icon": "fa-display"}
+    {"id": 4, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono PD200X", "query": "마오노 PD200X", "global_query": "Maono PD200X", "base_price": 89160, "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
+    {"id": 5, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "오디오 인터페이스", "name": "Maonocaster G1 NEO", "query": "마오노 G1 NEO", "global_query": "Maonocaster G1 NEO", "base_price": 63850, "image": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800", "icon": "fa-sliders"},
+    {"id": 6, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "키보드/스트림덱", "name": "Elgato Stream Deck Neo", "query": "엘가토 스트림덱 네오", "global_query": "Elgato Stream Deck Neo", "base_price": 133300, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800", "icon": "fa-keyboard"},
+    {"id": 7, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "사무용", "sub_group": "마우스", "name": "Logitech MX Master 4", "query": "로지텍 MX master 4", "global_query": "Logitech MX Master 4", "base_price": 179000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
+    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "edifier mr4", "global_query": "Edifier MR4", "base_price": 76410, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
+    {"id": 9, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "포터블 모니터", "name": "Zeuslap Z16P", "query": "제우스랩 Z16P", "global_query": "Zeuslap Z16P", "base_price": 150700, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800", "icon": "fa-display"},
+    {"id": 10, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "마우스 패드", "name": "Glorious GMP2 XXL White", "query": "글로리어스 GMP2 화이트 XXL", "global_query": "Glorious GMP2 XXL White", "base_price": 49900, "image": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800", "icon": "fa-square"},
+    {"id": 11, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "데스크 선반", "name": "Desk Shelf (White/Wood)", "query": "데스크 선반 모니터 받침대 원목", "global_query": "Desk Shelf Monitor Stand Timber", "base_price": 30000, "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800", "icon": "fa-table"}
 ]
 
-# 인터넷에서 엄선한 데스크 셋업 베스트 추천 제품 풀
+# 인터넷에서 엄선한 데스크 셋업 전용 추천 제품 풀
 RECOMMENDATION_POOL = [
     {"id": 201, "name": "Logitech G Pro X Superlight 2", "sub_group": "마우스", "base_price": 199000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800"},
     {"id": 202, "name": "Keychron Q1 Max 무선 기계식 키보드", "sub_group": "키보드/스트림덱", "base_price": 239000, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800"},
-    {"id": 203, "name": "Sony WH-1000XM5 무선 노이스캔슬링 헤드셋", "sub_group": "이어폰", "base_price": 479000, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800"},
+    {"id": 203, "name": "Sony WH-1000XM5 무선 노이즈캔슬링 헤드셋", "sub_group": "이어폰", "base_price": 479000, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800"},
     {"id": 204, "name": "BenQ ScreenBar Halo 모니터 조명", "sub_group": "데스크 선반", "base_price": 189000, "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800"},
     {"id": 205, "name": "Dell UltraSharp U2723QE 4K 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
@@ -159,7 +163,7 @@ async def serve_mobile_ui():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MILITARY DISCHARGE DESK SETUP TRACKER</title>
+    <title>DESK SETUP PRO V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -184,7 +188,7 @@ async def serve_mobile_ui():
     <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 px-5 py-4 shadow-md flex justify-between items-center">
         <div>
             <h1 class="text-base font-black text-white flex items-center gap-2 tracking-tight font-mono">
-                <i class="fa-solid fa-shield-halved text-cyan-400"></i> 전역 D-Day: <span id="ddayCount" class="text-amber-400">계산중...</span>
+                <i class="fa-solid fa-server text-cyan-400"></i> 데스크 셋업 프로 V2
             </h1>
             <p class="text-[11px] text-slate-400 font-mono mt-0.5">제품 총 가격: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span> | 위시 총액: <span id="wishTotal" class="text-purple-400 font-bold">0원</span></p>
         </div>
@@ -218,7 +222,7 @@ async def serve_mobile_ui():
             <form id="addProductForm" onsubmit="submitNewProduct(event)" class="space-y-3 text-xs">
                 <div>
                     <label class="block text-slate-400 mb-1 font-bold">제품명</label>
-                    <input type="text" id="addName" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 키크론 키보드">
+                    <input type="text" id="addName" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 로지텍 마우스">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -240,7 +244,7 @@ async def serve_mobile_ui():
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1 font-bold">검색 쿼리</label>
-                    <input type="text" id="addQuery" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 키크론 키보드">
+                    <input type="text" id="addQuery" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 로지텍 마우스">
                 </div>
                 <div class="space-y-2 pt-1 border-t border-slate-800">
                     <div class="flex items-center gap-2">
@@ -273,7 +277,7 @@ async def serve_mobile_ui():
                 <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <!-- 원터치 AI 분석 버튼 (에러 없이 즉시 외부 AI로 연결) -->
+            <!-- 원터치 AI 분석 버튼 -->
             <div class="mb-4">
                 <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 원터치 가격 예상 및 구매시기 분석</label>
                 <div class="grid grid-cols-3 gap-2">
@@ -295,7 +299,7 @@ async def serve_mobile_ui():
 
             <div class="pt-3 border-t border-slate-800">
                 <h4 class="text-xs font-black text-cyan-400 mb-2.5 flex items-center gap-1.5">
-                    <i class="fa-solid fa-star text-amber-400"></i> 전역 준비 추천 베스트 아이템 (공식 추천 풀)
+                    <i class="fa-solid fa-star text-amber-400"></i> 추천 제품 풀 (인기 데스크 셋업 베스트)
                 </h4>
                 <div id="independentRecsList" class="space-y-2"></div>
             </div>
@@ -303,16 +307,6 @@ async def serve_mobile_ui():
     </div>
 
     <script>
-        // 전역일 계산 (2027년 10월 15일 기준)
-        function updateDday() {
-            const dischargeDate = new Date('2027-10-15T00:00:00');
-            const today = new Date();
-            const diffTime = dischargeDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            document.getElementById('ddayCount').textContent = diffDays > 0 ? `D-${diffDays}` : "전역 완료!";
-        }
-        updateDday();
-
         let items = [];
         let currentItem = null;
         let currentView = 'main';
@@ -452,7 +446,7 @@ async def serve_mobile_ui():
                     </div>
                 `).join('');
             } else {
-                recContainer.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-2">등록된 추천 제품이 없습니다.</div>';
+                recContainer.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-2">추천 제품이 없습니다.</div>';
             }
         }
 
@@ -476,16 +470,47 @@ async def serve_mobile_ui():
             else if(currentView === 'wishlist') targetItems = items.filter(i => i.is_wishlist === true);
             else targetItems = items.filter(i => i.is_deal === true);
 
+            // 타임딜 & 쿠폰 뷰일 때 상단에 글로벌 빅세일 D-Day 캘린더 표시
+            let salesBannerHTML = "";
+            if(currentView === 'deals') {
+                const now = new Date();
+                const salesEvents = [
+                    { name: "알리익스프레스 광군제", date: new Date('2026-11-11T00:00:00') },
+                    { name: "블랙프라이데이", date: new Date('2026-11-27T00:00:00') },
+                    { name: "연말 결산 감사제", date: new Date('2026-12-15T00:00:00') },
+                    { name: "신년 맞이 특가전", date: new Date('2027-01-01T00:00:00') }
+                ];
+                
+                salesBannerHTML = `
+                <div class="glass-card rounded-2xl p-4 border border-amber-500/30 mb-4 bg-amber-950/20">
+                    <h3 class="text-xs font-black text-amber-400 mb-2.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-days"></i> 글로벌 대형 세일 예상 D-Day 캘린더
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${salesEvents.map(ev => {
+                            const diffDays = Math.ceil((ev.date - now) / (1000 * 60 * 60 * 24));
+                            return `
+                                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                                    <span class="text-[11px] font-bold text-slate-300 truncate pr-1">${ev.name}</span>
+                                    <span class="text-xs font-mono font-black text-amber-400 shrink-0">${diffDays > 0 ? `D-${diffDays}` : '진행중/종료'}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                `;
+            }
+
             const filtered = (currentView === 'deals' || currentFilter === '전체') ? targetItems : targetItems.filter(i => i.category === currentFilter);
             const groups = [...new Set(filtered.map(i => i.sub_group))];
             
-            if(groups.length === 0) {
-                listEl.innerHTML = '<div class="text-center text-slate-500 py-16 text-xs">등록된 제품이 없습니다.</div>';
+            if(groups.length === 0 && currentView !== 'deals') {
+                listEl.innerHTML = salesBannerHTML + '<div class="text-center text-slate-500 py-16 text-xs">등록된 제품이 없습니다.</div>';
                 return;
             }
 
             const nowTime = new Date().getTime();
-            listEl.innerHTML = groups.map(g => {
+            const itemsHTML = groups.map(g => {
                 const groupItems = filtered.filter(i => i.sub_group === g);
                 return `
                 <div>
@@ -564,6 +589,8 @@ async def serve_mobile_ui():
                 </div>
                 `;
             }).join('');
+
+            listEl.innerHTML = salesBannerHTML + itemsHTML;
         }
         loadItems();
     </script>
