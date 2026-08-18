@@ -8,7 +8,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Desk Setup Master Pro V2")
+app = FastAPI(title="Desk Setup Pro V2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +22,6 @@ HISTORY_FILE = "price_history_master.json"
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
-# 모든 기존 제품 원상복구 완료
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
@@ -37,7 +36,6 @@ MASTER_ITEMS = [
     {"id": 11, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "데스크 선반", "name": "Desk Shelf (White/Wood)", "query": "데스크 선반 모니터 받침대 원목", "global_query": "Desk Shelf Monitor Stand Timber", "base_price": 30000, "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800", "icon": "fa-table"}
 ]
 
-# 인터넷에서 엄선한 데스크 셋업 전용 추천 제품 풀
 RECOMMENDATION_POOL = [
     {"id": 201, "name": "Logitech G Pro X Superlight 2", "sub_group": "마우스", "base_price": 199000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800"},
     {"id": 202, "name": "Keychron Q1 Max 무선 기계식 키보드", "sub_group": "키보드/스트림덱", "base_price": 239000, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800"},
@@ -269,17 +267,17 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 상세 정보 및 AI 원터치 분석 모달 -->
+    <!-- 상세 정보 및 업그레이드된 AI 원터치 분석 모달 -->
     <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-lg rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">제품 상세 및 AI 원터치 분석</h3>
+                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">제품 상세 및 AI 팩트 체크 분석</h3>
                 <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <!-- 원터치 AI 분석 버튼 -->
+            <!-- 업그레이드된 AI 원터치 분석 버튼 (최신 뉴스, 거시경제, 100% 팩트 기반 프롬프트 적용) -->
             <div class="mb-4">
-                <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 원터치 가격 예상 및 구매시기 분석</label>
+                <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (최신 뉴스 연동)</label>
                 <div class="grid grid-cols-3 gap-2">
                     <button onclick="openAiSearch('Gemini')" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-1">
                         <i class="fa-solid fa-gem"></i> Gemini
@@ -396,9 +394,19 @@ async def serve_mobile_ui():
             }
         }
 
+        // 최신 뉴스, 거시경제, 100% 팩트 기반 전문 애널리스트 프롬프트 적용
         function openAiSearch(aiName) {
             if(!currentItem) return;
-            const q = `제품명: ${currentItem.name}, 기준가격: ${currentItem.base_price}원. 이 제품의 시장 동향, 향후 가격 예측, 최적의 구매 시기를 분석해줘.`;
+            const q = `당신은 최정상급 IT 디바이스 및 글로벌 유통 시장 전문 애널리스트입니다. 
+분석 대상 제품: '${currentItem.name}', 기준 가격: ${currentItem.base_price.toLocaleString()}원. 
+가장 최근의 실시간 뉴스, 글로벌 환율, 반도체 및 부품 수급 상황, 거시경제 지표 및 주요 유통사(네이버, 다나와, 아마존, 알리 등)의 프로모션 동향을 철저히 분석하여 100% 팩트 기반의 상세 리포트를 작성해 주세요.
+
+다음 항목을 빠짐없이 구체적인 수치와 근거를 들어 답변해 주세요:
+1. [현재 시장 팩트 체크]: 가장 최근 뉴스와 경제 상황을 반영한 이 제품의 객관적인 시장 평가 및 현재 가격 적정성 분석
+2. [향후 가격 예측]: 앞으로 가격이 상승할지 하락할지 여부와 구체적인 예상 가격대 (시기별 예측 포함)
+3. [최적의 구매 타이밍]: 언제 사야 가장 싸게 살 수 있는지 (블랙프라이데이, 광군제, 연말 세일 등 구체적인 세일 시즌 연계)
+4. [구매 근거 요약]: 위 예측을 뒷받침하는 확실한 데이터와 핵심 근거`;
+
             let url = "";
             if(aiName === 'Gemini') url = `https://gemini.google.com/app?q=${encodeURIComponent(q)}`;
             else if(aiName === 'ChatGPT') url = `https://chatgpt.com/?q=${encodeURIComponent(q)}`;
@@ -470,7 +478,6 @@ async def serve_mobile_ui():
             else if(currentView === 'wishlist') targetItems = items.filter(i => i.is_wishlist === true);
             else targetItems = items.filter(i => i.is_deal === true);
 
-            // 타임딜 & 쿠폰 뷰일 때 상단에 글로벌 빅세일 D-Day 캘린더 표시
             let salesBannerHTML = "";
             if(currentView === 'deals') {
                 const now = new Date();
@@ -567,7 +574,6 @@ async def serve_mobile_ui():
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 마켓 버튼 대형화 및 로고 적용 -->
                                 <div class="p-2 bg-slate-950/80 grid grid-cols-2 gap-1.5 border-t border-slate-800 text-center">
                                     <a href="${naverLink}" target="_blank" class="py-1.5 bg-[#03C75A]/20 hover:bg-[#03C75A]/30 text-[#03C75A] rounded-lg text-[10px] font-black flex items-center justify-center gap-1 transition">
                                         <i class="fa-solid fa-n"></i> 네이버
