@@ -1,16 +1,15 @@
-﻿import os
+import os
 import json
 import threading
 import webbrowser
 import uvicorn
+import requests
 from datetime import datetime
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-
-app = FastAPI(title="Desk Setup Tracker Master Pro")
-
+app = FastAPI(title="Desk Setup AI Tracker Master Pro")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,13 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 HISTORY_FILE = "price_history_master.json"
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
+# Render 환경 변수에서 API 키를 안전하게 불러옴
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-# 사용자 지정 11개 찐 장비 리스트
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
@@ -35,22 +34,19 @@ MASTER_ITEMS = [
     {"id": 5, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "오디오 인터페이스", "name": "Maonocaster G1 NEO", "query": "마오노 G1 NEO", "global_query": "Maonocaster G1 NEO", "base_price": 63850, "image": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800", "icon": "fa-sliders"},
     {"id": 6, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "키보드/스트림덱", "name": "Elgato Stream Deck Neo", "query": "엘가토 스트림덱 네오", "global_query": "Elgato Stream Deck Neo", "base_price": 133300, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800", "icon": "fa-keyboard"},
     {"id": 7, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "사무용", "sub_group": "마우스", "name": "Logitech MX Master 4", "query": "로지텍 MX master 4", "global_query": "Logitech MX Master 4", "base_price": 179000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
-    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "에디파이어 MR4", "global_query": "Edifier MR4", "base_price": 76410, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
+    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "edifier mr4", "global_query": "Edifier MR4", "base_price": 76410, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
     {"id": 9, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "포터블 모니터", "name": "Zeuslap Z16P", "query": "제우스랩 Z16P", "global_query": "Zeuslap Z16P", "base_price": 150700, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800", "icon": "fa-display"},
     {"id": 10, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "마우스 패드", "name": "Glorious GMP2 XXL White", "query": "글로리어스 GMP2 화이트 XXL", "global_query": "Glorious GMP2 XXL White", "base_price": 49900, "image": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800", "icon": "fa-square"},
     {"id": 11, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "데스크 선반", "name": "Desk Shelf (White/Wood)", "query": "데스크 선반 모니터 받침대 원목", "global_query": "Desk Shelf Monitor Stand Timber", "base_price": 30000, "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800", "icon": "fa-table"}
 ]
 
-
-# 메인 리스트에 절대 섞이지 않는 별도 추천 전자기기 풀 (추천용 파일)
 RECOMMENDATION_POOL = [
     {"id": 101, "name": "Logitech G Pro X Superlight 2", "sub_group": "마우스", "base_price": 199000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800"},
-    {"id": 102, "name": "Keychron Q1 Pro 무선 키보드", "sub_group": "키보드", "base_price": 229000, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800"},
-    {"id": 103, "name": "Sony WH-1000XM5 헤드셋", "sub_group": "이어폰/헤드셋", "base_price": 479000, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800"},
+    {"id": 102, "name": "Keychron Q1 Pro 무선 키보드", "sub_group": "키보드/스트림덱", "base_price": 229000, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800"},
+    {"id": 103, "name": "Sony WH-1000XM5 헤드셋", "sub_group": "이어폰", "base_price": 479000, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800"},
     {"id": 104, "name": "Bose Companion 2 Series III 스피커", "sub_group": "스피커", "base_price": 149000, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800"},
     {"id": 105, "name": "Dell UltraSharp U2723QE 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
-
 
 def init_files():
     if not os.path.exists(PRODUCTS_FILE):
@@ -60,7 +56,6 @@ def init_files():
         with open(RECOMMENDATIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(RECOMMENDATION_POOL, f, ensure_ascii=False, indent=4)
 
-
 def load_products():
     init_files()
     try:
@@ -69,11 +64,9 @@ def load_products():
     except:
         return MASTER_ITEMS
 
-
 def save_products(products):
     with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
         json.dump(products, f, ensure_ascii=False, indent=4)
-
 
 def load_recommendations():
     init_files()
@@ -82,7 +75,6 @@ def load_recommendations():
             return json.load(f)
     except:
         return RECOMMENDATION_POOL
-
 
 def load_history():
     if not os.path.exists(HISTORY_FILE):
@@ -93,32 +85,83 @@ def load_history():
     except:
         return {}
 
-
 def save_history(history_data):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history_data, f, ensure_ascii=False, indent=4)
-
 
 @app.on_event("startup")
 async def startup_event():
     init_files()
     threading.Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:8000")).start()
 
-
 @app.get("/api/items")
 async def get_items():
     return load_products()
 
-
 @app.get("/api/recommendations")
 async def get_recommendations(sub_group: str = Query(...)):
     recs = load_recommendations()
-    # 서브그룹이 일치하거나 전체 풀에서 가져옴
     matched = [r for r in recs if r["sub_group"] == sub_group]
     if not matched:
         matched = recs[:3]
     return matched
 
+# 실시간 AI 분석 엔드포인트 (부품/뉴스/경쟁 상황 종합 및 가격 예상, 적정 구매시기, 키워드, 근거 제공)
+@app.get("/api/ai-analyze/{item_id}")
+async def ai_analyze(item_id: int):
+    products = load_products()
+    item = next((i for i in products if i["id"] == item_id), None)
+    if not item:
+        return {"status": "error", "message": "제품을 찾을 수 없습니다."}
+
+    if not GEMINI_API_KEY:
+        return {"status": "error", "message": "Render 환경 변수에 GEMINI_API_KEY가 설정되지 않았습니다."}
+
+    prompt = f"""
+    당신은 전문 IT 장비 및 유통 시장 애널리스트입니다.
+    분석 대상 제품: {item['name']}
+    현재 등록된 기준 가격: {item['base_price']:,}원
+    카테고리/부품군: {item['sub_group']}
+
+    인터넷 실시간 검색 및 최신 부품 공급 상황(반도체, 원자재, 물류, 경쟁사 동향 등)을 바탕으로 다음 내용을 정확히 분석하여 JSON 형식으로만 답변해주세요. Markdown 코드블록(```json ... ```)이나 다른 설명 없이 오직 순수 JSON 문자열만 출력하세요.
+
+    JSON 구조:
+    {{
+      "trend": "UP 또는 DOWN 중 하나 선택 (상승이면 UP, 하락이면 DOWN)",
+      "keywords": ["키워드1", "키워드2", "키워드3"],
+      "future_prediction": "예상 미래 가격 (숫자만, 예: 245000)",
+      "purchase_timing": "적정 구매시기 추천 및 조언 (예: 환율 안정화 및 다음달 할인 행사 시기인 다음달 중순 추천)",
+      "evidence": "가격 변동의 확실한 근거와 부품/뉴스/경쟁 상황에 대한 간략한 설명"
+    }}
+    """
+
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "tools": [{"googleSearch": {}}]
+    }
+
+    models_to_try = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"]
+    
+    response_data = None
+    for model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        try:
+            res = requests.post(url, headers=headers, json=payload, timeout=25)
+            if res.status_code == 200:
+                res_json = res.json()
+                text = res_json["candidates"][0]["content"]["parts"][0]["text"]
+                # JSON 파싱 정제
+                text = text.replace("```json", "").replace("```", "").strip()
+                response_data = json.loads(text)
+                break
+        except Exception:
+            continue
+
+    if not response_data:
+        return {"status": "error", "message": "구글 AI 서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
+
+    return {"status": "success", "data": response_data}
 
 @app.post("/api/toggle-wishlist")
 async def toggle_wishlist(item_id: int = Query(...)):
@@ -129,7 +172,6 @@ async def toggle_wishlist(item_id: int = Query(...)):
     save_products(products)
     return {"status": "success"}
 
-
 @app.post("/api/toggle-buy")
 async def toggle_buy(item_id: int = Query(...)):
     products = load_products()
@@ -138,7 +180,6 @@ async def toggle_buy(item_id: int = Query(...)):
             p["is_bought"] = not p.get("is_bought", False)
     save_products(products)
     return {"status": "success"}
-
 
 @app.post("/api/add-item")
 async def add_item(
@@ -177,7 +218,6 @@ async def add_item(
     save_products(products)
     return {"status": "success", "id": new_id}
 
-
 @app.post("/api/record-price")
 async def record_price(item_id: int = Query(...), price: int = Query(...)):
     history_db = load_history()
@@ -191,16 +231,13 @@ async def record_price(item_id: int = Query(...), price: int = Query(...)):
     if not target_item:
         return {"status": "error"}
 
-
     target_item["base_price"] = price
     save_products(products)
-
 
     now_date_str = datetime.now().strftime("%Y-%m-%d")
     now_full_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     
     item_history = history_db[str_id]["history"]
-    # 00~24시 당일 중복 기입 시 마지막 값으로 갱신 (요청 1번 반영)
     if item_history and item_history[-1]["date"].startswith(now_date_str):
         item_history[-1]["date"] = now_full_str
         item_history[-1]["user_price"] = price
@@ -211,7 +248,6 @@ async def record_price(item_id: int = Query(...), price: int = Query(...)):
     history_db[str_id]["history"] = item_history
     save_history(history_db)
     return {"status": "success"}
-
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_mobile_ui():
@@ -260,14 +296,12 @@ async def serve_mobile_ui():
         <button onclick="switchView('deals')" id="view-deals" class="flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800 transition">타임딜 & 쿠폰</button>
     </div>
 
-
     <div class="px-5 py-2.5 flex gap-2 overflow-x-auto scrollbar-none text-xs bg-slate-950/60 border-b border-slate-900" id="catTabsContainer">
         <button onclick="filterCategory('전체')" id="tab-전체" class="category-btn px-4 py-2 rounded-xl bg-slate-800 text-cyan-400 font-black border border-cyan-500/40 transition shrink-0">전체보기</button>
         <button onclick="filterCategory('게이밍')" id="tab-게이밍" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition shrink-0">게이밍</button>
         <button onclick="filterCategory('사무용')" id="tab-사무용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition shrink-0">사무용</button>
         <button onclick="filterCategory('공용')" id="tab-공용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition shrink-0">공용</button>
     </div>
-
 
     <main id="itemList" class="p-4 space-y-6 max-w-xl mx-auto"></main>
     
@@ -328,21 +362,42 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-
-    <!-- 그래프 및 추천 상품 모달 -->
+    <!-- 그래프, AI 분석 리포트 및 추천 상품 모달 -->
     <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-lg rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">가격 변동 히스토리</h3>
+                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">제품 상세 및 AI 분석 리포트</h3>
                 <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <div class="relative w-full h-48 bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-inner mb-4">
+            <!-- 실시간 AI 분석 호출 버튼 -->
+            <button id="aiAnalyzeBtn" onclick="runAiAnalysis()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-black py-3 rounded-xl shadow-lg transition mb-3 flex items-center justify-center gap-2 text-xs">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 실시간 미래 가격 예상 및 구매시기 분석
+            </button>
+
+            <!-- AI 분석 결과 출력 박스 (상승 시 빨간 배경, 하락 시 파란 배경 동적 적용) -->
+            <div id="aiResultBox" class="hidden mb-3 rounded-2xl p-4 border text-xs shadow-inner transition-all duration-300">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="aiKeywords" class="text-[10px] font-mono font-bold bg-black/30 px-2 py-0.5 rounded">키워드: -</span>
+                    <span class="font-mono text-[11px]">예상가: <strong id="aiFuturePrice" class="text-sm">-</strong></span>
+                </div>
+                <div class="space-y-2 mt-2 pt-2 border-t border-white/20">
+                    <div>
+                        <strong class="block text-[11px] opacity-90 mb-0.5">💡 적정 구매시기 추천</strong>
+                        <p id="aiTimingText" class="text-xs leading-relaxed font-semibold"></p>
+                    </div>
+                    <div>
+                        <strong class="block text-[11px] opacity-90 mb-0.5">📊 확실한 변동 근거 (부품/뉴스/경쟁)</strong>
+                        <p id="aiEvidenceText" class="text-[11px] leading-relaxed opacity-95"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative w-full h-40 bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-inner mb-4">
                 <canvas id="priceChart"></canvas>
             </div>
 
-
-            <!-- 추천용 파일에서 가져온 상품들만 표시되는 전용 영역 (메인과 절대 안 섞임) -->
+            <!-- 추천용 파일에서 가져온 상품들만 표시되는 전용 영역 -->
             <div class="pt-3 border-t border-slate-800">
                 <h4 class="text-xs font-black text-cyan-400 mb-2.5 flex items-center gap-1.5">
                     <i class="fa-solid fa-star text-amber-400"></i> 독립 추천 풀에서 가져온 동급 인기기기 추천
@@ -352,13 +407,12 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-
     <script>
         let items = [];
+        let currentItem = null;
         let currentView = 'main';
         let currentFilter = '전체';
         let priceChartInstance = null;
-
 
         async function loadItems() {
             try {
@@ -374,18 +428,15 @@ async def serve_mobile_ui():
             } catch(e) { console.error(e); }
         }
 
-
         async function toggleWishlist(id) {
             await fetch(`/api/toggle-wishlist?item_id=${id}`, { method: 'POST' });
             await loadItems();
         }
 
-
         async function toggleBuy(id) {
             await fetch(`/api/toggle-buy?item_id=${id}`, { method: 'POST' });
             await loadItems();
         }
-
 
         function switchView(view) {
             currentView = view;
@@ -394,7 +445,6 @@ async def serve_mobile_ui():
             document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800 transition";
             document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800 transition";
             document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800 transition";
-
 
             if(view === 'main') {
                 document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition";
@@ -409,10 +459,8 @@ async def serve_mobile_ui():
             render();
         }
 
-
         function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
-
 
         async function submitNewProduct(event) {
             event.preventDefault();
@@ -427,7 +475,6 @@ async def serve_mobile_ui():
             const coupon_name = encodeURIComponent(document.getElementById('addCoupon').value || '');
             const expires_at = encodeURIComponent(document.getElementById('addExpires').value || '');
 
-
             const url = `/api/add-item?name=${name}&category=${category}&sub_group=${sub_group}&base_price=${base_price}&query=${query}&is_wishlist=${is_wishlist}&is_deal=${is_deal}&discount_rate=${discount_rate}&coupon_name=${coupon_name}&expires_at=${expires_at}`;
             const res = await fetch(url, { method: 'POST' });
             if((await res.json()).status === 'success') {
@@ -438,7 +485,6 @@ async def serve_mobile_ui():
             }
         }
 
-
         async function manualRecord(id) {
             const item = items.find(i => i.id === id);
             const val = prompt("현재 시장 정가 입력 (원 단위):", item ? item.base_price : "");
@@ -446,20 +492,19 @@ async def serve_mobile_ui():
                 const res = await fetch(`/api/record-price?item_id=${id}&price=${val}`, { method: 'POST' });
                 if((await res.json()).status === 'success') {
                     await loadItems();
-                    alert('가격이 기록되었습니다. (당일 중복 기입 시 마지막 값으로 갱신됨)');
+                    alert('가격이 기록되었습니다. (오늘 중복 입력 시 마지막 값으로 갱신됨)');
                 }
             }
         }
 
-
         async function openChartModal(item) {
-            document.getElementById('modalTitle').textContent = item.name + ' - 가격 히스토리';
+            currentItem = item;
+            document.getElementById('modalTitle').textContent = item.name;
+            document.getElementById('aiResultBox').classList.add('hidden'); // 모달 열 때 AI 결과 초기화
             document.getElementById('chartModal').classList.remove('hidden');
             
-            // 더미 히스토리 생성 (실제 데이터가 있으면 대체 가능)
-            const historyDates = ['초기 등록', '최근 기록'];
+            const historyDates = ['초기 등록', '현재'];
             const historyPrices = [item.base_price * 0.98, item.base_price];
-
 
             const ctx = document.getElementById('priceChart').getContext('2d');
             if(priceChartInstance) priceChartInstance.destroy();
@@ -478,8 +523,6 @@ async def serve_mobile_ui():
                 }
             });
 
-
-            // 추천용 파일(recommendations_master.json)에서 독립 상품 데이터 불러오기
             const recRes = await fetch(`/api/recommendations?sub_group=${encodeURIComponent(item.sub_group)}`);
             const recs = await recRes.json();
             
@@ -499,9 +542,45 @@ async def serve_mobile_ui():
             }
         }
 
+        // Gemini AI 분석 실행 함수 (상승시 빨간 배경, 하락시 파란 배경 동적 적용)
+        async function runAiAnalysis() {
+            if(!currentItem) return;
+            const btn = document.getElementById('aiAnalyzeBtn');
+            const resultBox = document.getElementById('aiResultBox');
+            
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> 실시간 부품 및 시장 분석 중...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/ai-analyze/${currentItem.id}`);
+                const json = await res.json();
+                
+                if(json.status === 'success') {
+                    const data = json.data;
+                    document.getElementById('aiKeywords').textContent = "키워드: " + data.keywords.join(', ');
+                    document.getElementById('aiFuturePrice').textContent = Number(data.future_prediction).toLocaleString() + '원';
+                    document.getElementById('aiTimingText').textContent = data.purchase_timing;
+                    document.getElementById('aiEvidenceText').textContent = data.evidence;
+
+                    // 상승 시 빨간 배경(bg-red-950/90 border-red-500/60), 하락 시 파란 배경(bg-blue-950/90 border-blue-500/60) 동적 적용
+                    if(data.trend === 'UP') {
+                        resultBox.className = "mb-3 rounded-2xl p-4 border text-xs shadow-inner bg-red-950/90 border-red-500/60 text-red-100 transition-all duration-300";
+                    } else {
+                        resultBox.className = "mb-3 rounded-2xl p-4 border text-xs shadow-inner bg-blue-950/90 border-blue-500/60 text-blue-100 transition-all duration-300";
+                    }
+                    resultBox.classList.remove('hidden');
+                } else {
+                    alert(json.message);
+                }
+            } catch(e) {
+                alert('통신 오류가 발생했습니다.');
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 실시간 미래 가격 예상 및 구매시기 분석`;
+                btn.disabled = false;
+            }
+        }
 
         function closeChartModal() { document.getElementById('chartModal').classList.add('hidden'); }
-
 
         function filterCategory(cat) { 
             currentFilter = cat; 
@@ -513,7 +592,6 @@ async def serve_mobile_ui():
             });
             render(); 
         }
-
 
         function render() {
             const listEl = document.getElementById('itemList');
@@ -527,7 +605,6 @@ async def serve_mobile_ui():
                 targetItems = items.filter(i => i.is_deal === true);
             }
 
-
             const filtered = (currentView === 'deals' || currentFilter === '전체') ? targetItems : targetItems.filter(i => i.category === currentFilter);
             const groups = [...new Set(filtered.map(i => i.sub_group))];
             
@@ -536,9 +613,7 @@ async def serve_mobile_ui():
                 return;
             }
 
-
             const nowTime = new Date().getTime();
-
 
             listEl.innerHTML = groups.map(g => {
                 const groupItems = filtered.filter(i => i.sub_group === g);
@@ -554,7 +629,6 @@ async def serve_mobile_ui():
                             const amazonLink = `https://www.amazon.com/s?k=${encodeURIComponent(item.global_query)}`;
                             const aliLink = `https://ko.aliexpress.com/w/wholesale-${encodeURIComponent(item.global_query)}.html`;
 
-
                             let isUrgent = false;
                             if(item.is_deal && item.expires_at) {
                                 const expTime = new Date(item.expires_at).getTime();
@@ -562,17 +636,14 @@ async def serve_mobile_ui():
                                 if(diffHours > 0 && diffHours <= 12) { isUrgent = true; }
                             }
 
-
                             let cardClass = "glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative border border-slate-800";
                             if(isUrgent) { cardClass = "glass-card rounded-2xl overflow-hidden urgent-border flex flex-col justify-between relative"; }
                             if(item.is_bought) { cardClass += " grayscale opacity-60"; }
-
 
                             let finalPrice = item.base_price;
                             if(item.is_deal && item.discount_rate > 0) {
                                 finalPrice = Math.round(item.base_price * (1 - item.discount_rate / 100));
                             }
-
 
                             return `
                             <div class="${cardClass}">
@@ -588,7 +659,6 @@ async def serve_mobile_ui():
                                         </button>
                                     </div>
 
-
                                     <div class="absolute top-2 right-2 z-20 flex gap-1" onclick="event.stopPropagation();">
                                         <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95" title="구매 완료 토글">
                                             <i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}
@@ -598,7 +668,6 @@ async def serve_mobile_ui():
                                         </button>
                                     </div>
                                 </div>
-
 
                                 <div class="p-3 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
@@ -627,13 +696,11 @@ async def serve_mobile_ui():
             }).join('');
         }
 
-
         loadItems();
     </script>
 </body>
 </html>
 """
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
