@@ -106,7 +106,7 @@ async def get_recommendations(sub_group: str = Query(...)):
         matched = recs[:3]
     return matched
 
-# 실시간 AI 분석 엔드포인트 (부품/뉴스/경쟁 상황 종합 및 가격 예상, 적정 구매시기, 키워드, 근거 제공)
+# Bearer 인증 방식으로 수정된 AI 분석 엔드포인트
 @app.get("/api/ai-analyze/{item_id}")
 async def ai_analyze(item_id: int):
     products = load_products()
@@ -115,27 +115,28 @@ async def ai_analyze(item_id: int):
         return {"status": "error", "message": "제품을 찾을 수 없습니다."}
 
     if not GEMINI_API_KEY:
-        return {"status": "error", "message": "Render 환경 변수에 GEMINI_API_KEY가 설정되지 않았습니다."}
+        return {"status": "error", "message": "API 키가 설정되지 않았습니다."}
 
+    # Bearer 토큰(AQ 키 포함)을 위한 헤더 설정
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {GEMINI_API_KEY}" 
+    }
+    
     prompt = f"""
     당신은 전문 IT 장비 및 유통 시장 애널리스트입니다.
     분석 대상 제품: {item['name']}
-    현재 등록된 기준 가격: {item['base_price']:,}원
-    카테고리/부품군: {item['sub_group']}
+    기준 가격: {item['base_price']:,}원
 
-    인터넷 실시간 검색 및 최신 부품 공급 상황(반도체, 원자재, 물류, 경쟁사 동향 등)을 바탕으로 다음 내용을 정확히 분석하여 JSON 형식으로만 답변해주세요. Markdown 코드블록(```json ... ```)이나 다른 설명 없이 오직 순수 JSON 문자열만 출력하세요.
-
-    JSON 구조:
+    JSON 형식으로만 답변하세요.
     {{
-      "trend": "UP 또는 DOWN 중 하나 선택 (상승이면 UP, 하락이면 DOWN)",
-      "keywords": ["키워드1", "키워드2", "키워드3"],
-      "future_prediction": "예상 미래 가격 (숫자만, 예: 245000)",
-      "purchase_timing": "적정 구매시기 추천 및 조언 (예: 환율 안정화 및 다음달 할인 행사 시기인 다음달 중순 추천)",
-      "evidence": "가격 변동의 확실한 근거와 부품/뉴스/경쟁 상황에 대한 간략한 설명"
+      "trend": "UP 또는 DOWN",
+      "keywords": ["키워드1", "키워드2"],
+      "future_prediction": "예상 가격(숫자만)",
+      "purchase_timing": "구매시기 추천",
+      "evidence": "근거 설명"
     }}
     """
-
-    headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "tools": [{"googleSearch": {}}]
@@ -145,13 +146,12 @@ async def ai_analyze(item_id: int):
     
     response_data = None
     for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         try:
             res = requests.post(url, headers=headers, json=payload, timeout=25)
             if res.status_code == 200:
                 res_json = res.json()
                 text = res_json["candidates"][0]["content"]["parts"][0]["text"]
-                # JSON 파싱 정제
                 text = text.replace("```json", "").replace("```", "").strip()
                 response_data = json.loads(text)
                 break
@@ -159,7 +159,7 @@ async def ai_analyze(item_id: int):
             continue
 
     if not response_data:
-        return {"status": "error", "message": "구글 AI 서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
+        return {"status": "error", "message": "AI 서버 통신 실패 (토큰 형식을 확인하세요)"}
 
     return {"status": "success", "data": response_data}
 
@@ -375,7 +375,7 @@ async def serve_mobile_ui():
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 실시간 미래 가격 예상 및 구매시기 분석
             </button>
 
-            <!-- AI 분석 결과 출력 박스 (상승 시 빨간 배경, 하락 시 파란 배경 동적 적용) -->
+            <!-- AI 분석 결과 출력 박스 -->
             <div id="aiResultBox" class="hidden mb-3 rounded-2xl p-4 border text-xs shadow-inner transition-all duration-300">
                 <div class="flex justify-between items-center mb-2">
                     <span id="aiKeywords" class="text-[10px] font-mono font-bold bg-black/30 px-2 py-0.5 rounded">키워드: -</span>
@@ -397,7 +397,6 @@ async def serve_mobile_ui():
                 <canvas id="priceChart"></canvas>
             </div>
 
-            <!-- 추천용 파일에서 가져온 상품들만 표시되는 전용 영역 -->
             <div class="pt-3 border-t border-slate-800">
                 <h4 class="text-xs font-black text-cyan-400 mb-2.5 flex items-center gap-1.5">
                     <i class="fa-solid fa-star text-amber-400"></i> 독립 추천 풀에서 가져온 동급 인기기기 추천
@@ -492,7 +491,7 @@ async def serve_mobile_ui():
                 const res = await fetch(`/api/record-price?item_id=${id}&price=${val}`, { method: 'POST' });
                 if((await res.json()).status === 'success') {
                     await loadItems();
-                    alert('가격이 기록되었습니다. (오늘 중복 입력 시 마지막 값으로 갱신됨)');
+                    alert('가격이 기록되었습니다.');
                 }
             }
         }
@@ -500,7 +499,7 @@ async def serve_mobile_ui():
         async function openChartModal(item) {
             currentItem = item;
             document.getElementById('modalTitle').textContent = item.name;
-            document.getElementById('aiResultBox').classList.add('hidden'); // 모달 열 때 AI 결과 초기화
+            document.getElementById('aiResultBox').classList.add('hidden');
             document.getElementById('chartModal').classList.remove('hidden');
             
             const historyDates = ['초기 등록', '현재'];
@@ -542,7 +541,6 @@ async def serve_mobile_ui():
             }
         }
 
-        // Gemini AI 분석 실행 함수 (상승시 빨간 배경, 하락시 파란 배경 동적 적용)
         async function runAiAnalysis() {
             if(!currentItem) return;
             const btn = document.getElementById('aiAnalyzeBtn');
@@ -562,7 +560,6 @@ async def serve_mobile_ui():
                     document.getElementById('aiTimingText').textContent = data.purchase_timing;
                     document.getElementById('aiEvidenceText').textContent = data.evidence;
 
-                    // 상승 시 빨간 배경(bg-red-950/90 border-red-500/60), 하락 시 파란 배경(bg-blue-950/90 border-blue-500/60) 동적 적용
                     if(data.trend === 'UP') {
                         resultBox.className = "mb-3 rounded-2xl p-4 border text-xs shadow-inner bg-red-950/90 border-red-500/60 text-red-100 transition-all duration-300";
                     } else {
@@ -595,15 +592,10 @@ async def serve_mobile_ui():
 
         function render() {
             const listEl = document.getElementById('itemList');
-            
             let targetItems = [];
-            if(currentView === 'main') {
-                targetItems = items.filter(i => i.is_main === true);
-            } else if(currentView === 'wishlist') {
-                targetItems = items.filter(i => i.is_wishlist === true);
-            } else {
-                targetItems = items.filter(i => i.is_deal === true);
-            }
+            if(currentView === 'main') targetItems = items.filter(i => i.is_main === true);
+            else if(currentView === 'wishlist') targetItems = items.filter(i => i.is_wishlist === true);
+            else targetItems = items.filter(i => i.is_deal === true);
 
             const filtered = (currentView === 'deals' || currentFilter === '전체') ? targetItems : targetItems.filter(i => i.category === currentFilter);
             const groups = [...new Set(filtered.map(i => i.sub_group))];
@@ -614,7 +606,6 @@ async def serve_mobile_ui():
             }
 
             const nowTime = new Date().getTime();
-
             listEl.innerHTML = groups.map(g => {
                 const groupItems = filtered.filter(i => i.sub_group === g);
                 return `
@@ -652,23 +643,16 @@ async def serve_mobile_ui():
                                 
                                 <div class="w-full h-32 bg-slate-900 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <img src="${item.image}" class="w-full h-full object-cover rounded-xl" alt="${item.name}" onerror="this.style.display='none';">
-                                    
                                     <div class="absolute top-2 left-2 z-20" onclick="event.stopPropagation();">
                                         <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow transition active:scale-95">
                                             <i class="fa-${item.is_wishlist ? 'solid text-rose-500' : 'regular text-slate-400'} fa-heart text-xs"></i>
                                         </button>
                                     </div>
-
                                     <div class="absolute top-2 right-2 z-20 flex gap-1" onclick="event.stopPropagation();">
-                                        <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95" title="구매 완료 토글">
-                                            <i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}
-                                        </button>
-                                        <button onclick="manualRecord(${item.id})" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95">
-                                            <i class="fa-solid fa-pen"></i> 가격
-                                        </button>
+                                        <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95" title="구매 완료 토글"><i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}</button>
+                                        <button onclick="manualRecord(${item.id})" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95"><i class="fa-solid fa-pen"></i> 가격</button>
                                     </div>
                                 </div>
-
                                 <div class="p-3 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
                                     ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-0.5 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
@@ -677,10 +661,8 @@ async def serve_mobile_ui():
                                             ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through block">${item.base_price.toLocaleString()}원</span>` : ''}
                                             <span class="text-[11px] font-mono font-bold text-cyan-400">${finalPrice.toLocaleString()}원</span>
                                         </div>
-                                        <span class="text-[9px] font-mono text-slate-400">최종갱신</span>
                                     </div>
                                 </div>
-                                
                                 <div class="p-2 bg-slate-950/60 grid grid-cols-4 gap-1 border-t border-slate-800/60 text-center">
                                     <a href="${naverLink}" target="_blank" class="py-1 bg-[#03C75A]/15 text-[#03C75A] rounded text-[9px] font-black">네이버</a>
                                     <a href="${danawaLink}" target="_blank" class="py-1 bg-blue-500/15 text-blue-400 rounded text-[9px] font-black">다나와</a>
@@ -695,7 +677,6 @@ async def serve_mobile_ui():
                 `;
             }).join('');
         }
-
         loadItems();
     </script>
 </body>
