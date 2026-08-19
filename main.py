@@ -11,7 +11,7 @@ from duckduckgo_search import DDGS
 
 app = FastAPI(title="Desk Setup Pro V2")
 
-# CORS 설정
+# CORS 설정 (외부 접속 허용 및 안정성 확보)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,6 +23,7 @@ app.add_middleware(
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
+# 초기 데이터 마스터셋
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "target_price": 210000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "target_price": 80000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
@@ -45,6 +46,7 @@ RECOMMENDATION_POOL = [
     {"id": 205, "name": "Dell UltraSharp U2723QE 4K 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
 
+# JSON 데이터 안정적 초기화 (예외 처리 강화)
 def init_files():
     try:
         if not os.path.exists(PRODUCTS_FILE):
@@ -86,6 +88,7 @@ async def get_recommendations(sub_group: str = Query(...)):
         matched = recs[:3]
     return matched
 
+# AI 실시간 리서치 백엔드 (안정성 강화)
 @app.get("/api/research/{name}")
 async def research(name: str):
     try:
@@ -128,7 +131,7 @@ async def serve_mobile_ui():
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DESK SETUP PRO V2</title>
     
-    <!-- 정식 앱 매니페스트 호출 (버전 쿼리를 달아서 안드로이드 강제 새로고침 유도) -->
+    <!-- 정식 앱 매니페스트 호출 -->
     <meta name="theme-color" content="#030712">
     <link rel="manifest" href="/manifest.json?v=3">
     <link rel="icon" type="image/jpeg" sizes="512x512" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
@@ -832,3 +835,7 @@ ${previousHistory}
     </script>
 </body>
 </html>
+"""
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
