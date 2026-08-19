@@ -18,7 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-HISTORY_FILE = "price_history_master.json"
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
@@ -52,26 +51,6 @@ def init_files():
         with open(RECOMMENDATIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(RECOMMENDATION_POOL, f, ensure_ascii=False, indent=4)
 
-def load_products():
-    init_files()
-    try:
-        with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return MASTER_ITEMS
-
-def save_products(products):
-    with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(products, f, ensure_ascii=False, indent=4)
-
-def load_recommendations():
-    init_files()
-    try:
-        with open(RECOMMENDATIONS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return RECOMMENDATION_POOL
-
 @app.on_event("startup")
 async def startup_event():
     init_files()
@@ -79,80 +58,22 @@ async def startup_event():
 
 @app.get("/api/items")
 async def get_items():
-    return load_products()
+    if os.path.exists(PRODUCTS_FILE):
+        with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return MASTER_ITEMS
 
 @app.get("/api/recommendations")
 async def get_recommendations(sub_group: str = Query(...)):
-    recs = load_recommendations()
+    if os.path.exists(RECOMMENDATIONS_FILE):
+        with open(RECOMMENDATIONS_FILE, "r", encoding="utf-8") as f:
+            recs = json.load(f)
+    else:
+        recs = RECOMMENDATION_POOL
     matched = [r for r in recs if r["sub_group"] == sub_group]
     if not matched:
         matched = recs[:3]
     return matched
-
-@app.post("/api/toggle-wishlist")
-async def toggle_wishlist(item_id: int = Query(...)):
-    products = load_products()
-    for p in products:
-        if p["id"] == item_id:
-            p["is_wishlist"] = not p.get("is_wishlist", False)
-    save_products(products)
-    return {"status": "success"}
-
-@app.post("/api/toggle-buy")
-async def toggle_buy(item_id: int = Query(...)):
-    products = load_products()
-    for p in products:
-        if p["id"] == item_id:
-            p["is_bought"] = not p.get("is_bought", False)
-    save_products(products)
-    return {"status": "success"}
-
-@app.post("/api/add-item")
-async def add_item(
-    name: str = Query(...),
-    category: str = Query(...),
-    sub_group: str = Query("기타"),
-    base_price: int = Query(...),
-    query: str = Query(...),
-    is_wishlist: bool = Query(False),
-    is_deal: bool = Query(False),
-    discount_rate: int = Query(0),
-    coupon_name: str = Query(""),
-    expires_at: str = Query("")
-):
-    products = load_products()
-    new_id = max([p["id"] for p in products], default=0) + 1
-    new_product = {
-        "id": new_id,
-        "is_main": not is_deal and not is_wishlist,
-        "is_wishlist": is_wishlist,
-        "is_deal": is_deal,
-        "is_bought": False,
-        "discount_rate": discount_rate,
-        "coupon_name": coupon_name,
-        "expires_at": expires_at,
-        "category": category,
-        "sub_group": sub_group,
-        "name": name,
-        "query": query,
-        "global_query": name,
-        "base_price": base_price,
-        "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800",
-        "icon": "fa-box"
-    }
-    products.append(new_product)
-    save_products(products)
-    return {"status": "success", "id": new_id}
-
-@app.post("/api/record-price")
-async def record_price(item_id: int = Query(...), price: int = Query(...)):
-    products = load_products()
-    target_item = next((i for i in products if i["id"] == item_id), None)
-    if not target_item:
-        return {"status": "error"}
-    target_item["base_price"] = price
-    save_products(products)
-    return {"status": "success"}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_mobile_ui():
@@ -267,7 +188,7 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 상세 정보 및 업그레이드된 AI 원터치 분석 모달 -->
+    <!-- 상세 정보 및 AI 원터치 분석 모달 -->
     <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-lg rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
@@ -275,7 +196,6 @@ async def serve_mobile_ui():
                 <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <!-- 업그레이드된 AI 원터치 분석 버튼 (최신 뉴스, 거시경제, 100% 팩트 기반 프롬프트 적용) -->
             <div class="mb-4">
                 <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (최신 뉴스 연동)</label>
                 <div class="grid grid-cols-3 gap-2">
@@ -310,29 +230,51 @@ async def serve_mobile_ui():
         let currentView = 'main';
         let currentFilter = '전체';
         let priceChartInstance = null;
+        const STORAGE_KEY = 'desk_setup_pro_v2_storage';
 
         async function loadItems() {
             try {
-                const res = await fetch('/api/items');
-                items = await res.json();
-                
-                const total = items.filter(i => i.is_main && !i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
-                const wishTotal = items.filter(i => i.is_wishlist).reduce((sum, i) => sum + i.base_price, 0);
-                
-                document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
-                document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
-                render();
+                // 브라우저 로컬 스토리지에 데이터가 있으면 서버 리셋과 상관없이 우선 사용
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    items = JSON.parse(savedData);
+                } else {
+                    const res = await fetch('/api/items');
+                    items = await res.json();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+                }
+                updateTotalsAndRender();
             } catch(e) { console.error(e); }
         }
 
-        async function toggleWishlist(id) {
-            await fetch(`/api/toggle-wishlist?item_id=${id}`, { method: 'POST' });
-            await loadItems();
+        function saveAndRender() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+            updateTotalsAndRender();
         }
 
-        async function toggleBuy(id) {
-            await fetch(`/api/toggle-buy?item_id=${id}`, { method: 'POST' });
-            await loadItems();
+        function updateTotalsAndRender() {
+            const total = items.filter(i => i.is_main && !i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
+            const wishTotal = items.filter(i => i.is_wishlist).reduce((sum, i) => sum + i.base_price, 0);
+            
+            document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
+            document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
+            render();
+        }
+
+        function toggleWishlist(id) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                item.is_wishlist = !item.is_wishlist;
+                saveAndRender();
+            }
+        }
+
+        function toggleBuy(id) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                item.is_bought = !item.is_bought;
+                saveAndRender();
+            }
         }
 
         function switchView(view) {
@@ -359,42 +301,56 @@ async def serve_mobile_ui():
         function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
 
-        async function submitNewProduct(event) {
+        function submitNewProduct(event) {
             event.preventDefault();
-            const name = encodeURIComponent(document.getElementById('addName').value);
-            const category = encodeURIComponent(document.getElementById('addCategory').value);
-            const sub_group = encodeURIComponent(document.getElementById('addSubGroup').value);
-            const base_price = document.getElementById('addPrice').value;
-            const query = encodeURIComponent(document.getElementById('addQuery').value);
+            const name = document.getElementById('addName').value;
+            const category = document.getElementById('addCategory').value;
+            const sub_group = document.getElementById('addSubGroup').value;
+            const base_price = Number(document.getElementById('addPrice').value);
+            const query = document.getElementById('addQuery').value;
             const is_wishlist = document.getElementById('addWishlist').checked;
             const is_deal = document.getElementById('addDeal').checked;
-            const discount_rate = document.getElementById('addDiscount').value || 0;
-            const coupon_name = encodeURIComponent(document.getElementById('addCoupon').value || '');
-            const expires_at = encodeURIComponent(document.getElementById('addExpires').value || '');
+            const discount_rate = Number(document.getElementById('addDiscount').value) || 0;
+            const coupon_name = document.getElementById('addCoupon').value || '';
+            const expires_at = document.getElementById('addExpires').value || '';
 
-            const url = `/api/add-item?name=${name}&category=${category}&sub_group=${sub_group}&base_price=${base_price}&query=${query}&is_wishlist=${is_wishlist}&is_deal=${is_deal}&discount_rate=${discount_rate}&coupon_name=${coupon_name}&expires_at=${expires_at}`;
-            const res = await fetch(url, { method: 'POST' });
-            if((await res.json()).status === 'success') {
-                closeAddModal();
-                document.getElementById('addProductForm').reset();
-                await loadItems();
-                alert('새 제품이 성공적으로 추가되었습니다!');
-            }
+            const newId = items.length > 0 ? Math.max(...items.map(p => p.id)) + 1 : 1;
+            const newProduct = {
+                id: newId,
+                is_main: !is_deal && !is_wishlist,
+                is_wishlist: is_wishlist,
+                is_deal: is_deal,
+                is_bought: false,
+                discount_rate: discount_rate,
+                coupon_name: coupon_name,
+                expires_at: expires_at,
+                category: category,
+                sub_group: sub_group,
+                name: name,
+                query: query,
+                global_query: name,
+                base_price: base_price,
+                image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800",
+                icon: "fa-box"
+            };
+
+            items.push(newProduct);
+            saveAndRender();
+            closeAddModal();
+            document.getElementById('addProductForm').reset();
+            alert('새 제품이 성공적으로 추가되었습니다!');
         }
 
-        async function manualRecord(id) {
+        function manualRecord(id) {
             const item = items.find(i => i.id === id);
             const val = prompt("변경할 가격 입력 (원 단위):", item ? item.base_price : "");
-            if(val && !isNaN(val)) {
-                const res = await fetch(`/api/record-price?item_id=${id}&price=${val}`, { method: 'POST' });
-                if((await res.json()).status === 'success') {
-                    await loadItems();
-                    alert('가격이 변경되었습니다.');
-                }
+            if(val !== null && !isNaN(val) && val.trim() !== "") {
+                item.base_price = Number(val);
+                saveAndRender();
+                alert('가격이 변경되었습니다.');
             }
         }
 
-        // 최신 뉴스, 거시경제, 100% 팩트 기반 전문 애널리스트 프롬프트 적용
         function openAiSearch(aiName) {
             if(!currentItem) return;
             const q = `당신은 최정상급 IT 디바이스 및 글로벌 유통 시장 전문 애널리스트입니다. 
