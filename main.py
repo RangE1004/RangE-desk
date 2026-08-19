@@ -7,9 +7,11 @@ from datetime import datetime
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from duckduckgo_search import DDGS
 
 app = FastAPI(title="Desk Setup Pro V2")
 
+# CORS 설정 (외부 접속 허용 및 안정성 확보)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,6 +23,7 @@ app.add_middleware(
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
+# 초기 데이터 마스터셋
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "target_price": 210000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "target_price": 80000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
@@ -43,13 +46,17 @@ RECOMMENDATION_POOL = [
     {"id": 205, "name": "Dell UltraSharp U2723QE 4K 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
 
+# JSON 데이터 안정적 초기화
 def init_files():
-    if not os.path.exists(PRODUCTS_FILE):
-        with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(MASTER_ITEMS, f, ensure_ascii=False, indent=4)
-    if not os.path.exists(RECOMMENDATIONS_FILE):
-        with open(RECOMMENDATIONS_FILE, "w", encoding="utf-8") as f:
-            json.dump(RECOMMENDATION_POOL, f, ensure_ascii=False, indent=4)
+    try:
+        if not os.path.exists(PRODUCTS_FILE):
+            with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
+                json.dump(MASTER_ITEMS, f, ensure_ascii=False, indent=4)
+        if not os.path.exists(RECOMMENDATIONS_FILE):
+            with open(RECOMMENDATIONS_FILE, "w", encoding="utf-8") as f:
+                json.dump(RECOMMENDATION_POOL, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print("File init error:", e)
 
 @app.on_event("startup")
 async def startup_event():
@@ -59,21 +66,41 @@ async def startup_event():
 @app.get("/api/items")
 async def get_items():
     if os.path.exists(PRODUCTS_FILE):
-        with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return MASTER_ITEMS
     return MASTER_ITEMS
 
 @app.get("/api/recommendations")
 async def get_recommendations(sub_group: str = Query(...)):
     if os.path.exists(RECOMMENDATIONS_FILE):
-        with open(RECOMMENDATIONS_FILE, "r", encoding="utf-8") as f:
-            recs = json.load(f)
+        try:
+            with open(RECOMMENDATIONS_FILE, "r", encoding="utf-8") as f:
+                recs = json.load(f)
+        except:
+            recs = RECOMMENDATION_POOL
     else:
         recs = RECOMMENDATION_POOL
     matched = [r for r in recs if r["sub_group"] == sub_group]
     if not matched:
         matched = recs[:3]
     return matched
+
+# AI 실시간 리서치 백엔드 (안정성 강화)
+@app.get("/api/research/{name}")
+async def research(name: str):
+    try:
+        with DDGS() as ddgs:
+            res = list(ddgs.text(f"{name} 최저가 최신 뉴스 하락세", max_results=2))
+            if res:
+                summary = "🔥 [실시간 누적 리서치]\n" + "\n".join([f"- {r['body']}" for r in res])
+                return {"status": "success", "result": summary}
+            else:
+                return {"status": "error"}
+    except: 
+        return {"status": "error"}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_mobile_ui():
@@ -87,9 +114,26 @@ async def serve_mobile_ui():
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { -webkit-tap-highlight-color: transparent; background-color: #030712; }
-        .glass-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); }
+        /* 깊고 세련된 프리미엄 다크 그라데이션 배경 */
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            background: linear-gradient(135deg, #030712 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
         
+        /* 글래스모피즘 카드 디자인 강화 */
+        .glass-card { 
+            background: rgba(15, 23, 42, 0.75); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); 
+        }
+        
+        /* 입력 폼 포커스 시 부드러운 전환 */
+        input, select { transition: all 0.3s ease; }
+        input:focus, select:focus { box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); }
+
+        /* 타임딜 임박 붉은 네온빛 */
         @keyframes urgent-glow {
             0% { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.7); }
             50% { border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
@@ -97,205 +141,218 @@ async def serve_mobile_ui():
         }
         .urgent-border { animation: urgent-glow 1.5s infinite linear; border-width: 2px !important; }
         
+        /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
-            0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
-            50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
-            100% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
+            0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
+            100% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
         }
-        .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
+        .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
 
-        /* 세련되고 강렬한 빨간색 진짜 도장(스탬프) 느낌 */
+        /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-14deg);
-            border: 4px dashed #dc2626; color: #dc2626; font-weight: 900; font-size: 2.3rem; padding: 6px 20px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
+            border: 4px dashed #dc2626; color: #dc2626; font-weight: 900; font-size: 2.2rem; padding: 6px 20px;
             letter-spacing: 4px; text-transform: uppercase; pointer-events: none; z-index: 30; opacity: 0.95;
-            box-shadow: inset 0 0 15px rgba(220, 38, 38, 0.35), 0 0 20px rgba(220, 38, 38, 0.45); border-radius: 10px;
-            background-color: rgba(3, 7, 18, 0.55); font-family: monospace; text-shadow: 0 0 3px rgba(220, 38, 38, 0.7);
+            box-shadow: inset 0 0 15px rgba(220, 38, 38, 0.3), 0 0 25px rgba(220, 38, 38, 0.5); border-radius: 12px;
+            background-color: rgba(3, 7, 18, 0.6); font-family: monospace; text-shadow: 0 0 4px rgba(220, 38, 38, 0.8);
         }
+
+        /* 부드러운 페이드 인/아웃 애니메이션 */
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .toast-enter { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 100%); } to { opacity: 1; transform: translate(-50%, 0); } }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen pb-24 font-sans selection:bg-cyan-500/30">
-    <header class="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-2xl border-b border-slate-800/80 px-5 py-4 shadow-xl">
+<body class="text-slate-100 pb-24 font-sans selection:bg-cyan-500/30">
+    <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-2xl border-b border-slate-800/80 px-5 py-4 shadow-xl">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-base font-black text-white flex items-center gap-2 tracking-widest font-mono">
-                    <i class="fa-solid fa-server text-cyan-400"></i> DESK SETUP PRO V2
+                <!-- 그라데이션이 들어간 멋진 타이틀 텍스트 -->
+                <h1 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400 flex items-center gap-2 tracking-widest font-mono drop-shadow-md">
+                    <i class="fa-solid fa-layer-group text-cyan-400 drop-shadow-none"></i> DESK SETUP PRO
                 </h1>
-                <p class="text-[11px] text-slate-400 font-mono mt-0.5">제품 총 가격: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span> | 위시 총액: <span id="wishTotal" class="text-purple-400 font-bold">0원</span></p>
+                <p class="text-[11px] text-slate-400 font-mono mt-1">보유 자산: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span> | 위시 총액: <span id="wishTotal" class="text-purple-400 font-bold">0원</span></p>
             </div>
-            <button onclick="openAddModal()" class="bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-1.5 active:scale-95 hover:opacity-90">
+            <button onclick="openAddModal()" class="bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all flex items-center gap-1.5 active:scale-95 hover:shadow-[0_0_20px_rgba(34,211,238,0.5)]">
                 <i class="fa-solid fa-plus text-[11px]"></i> 제품 추가
             </button>
         </div>
-        <div class="mt-3 pt-2.5 border-t border-slate-800/60">
-            <div class="flex justify-between text-[10px] text-slate-400 font-mono mb-1.5 items-center">
-                <span>예산금 (<span id="budgetText">0원 / 1,000,000원</span>) <button onclick="editBudget()" class="text-[9px] bg-slate-900 hover:bg-slate-800 text-cyan-400 px-2 py-0.5 rounded-lg border border-slate-700/80 ml-1 transition"><i class="fa-solid fa-pen"></i> 수정</button></span>
-                <span id="budgetPercent" class="text-emerald-400 font-bold">0%</span>
+        <div class="mt-4 pt-3 border-t border-slate-800/60">
+            <div class="flex justify-between text-[10px] text-slate-300 font-mono mb-1.5 items-center">
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-bullseye text-emerald-400"></i> 전역 셋업 예산금 (<span id="budgetText">0원 / 1,000,000원</span>) 
+                    <button onclick="editBudget()" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-cyan-400 px-2 py-0.5 rounded-lg border border-slate-700 ml-1 transition-colors"><i class="fa-solid fa-pen"></i> 수정</button>
+                </span>
+                <span id="budgetPercent" class="text-emerald-400 font-bold text-xs">0%</span>
             </div>
-            <div class="w-full bg-slate-900/90 h-2 rounded-full overflow-hidden border border-slate-800">
-                <div id="budgetBar" class="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full transition-all duration-500 shadow-lg shadow-emerald-500/20" style="width: 0%"></div>
+            <div class="w-full bg-slate-900/90 h-2.5 rounded-full overflow-hidden border border-slate-800/80 shadow-inner">
+                <div id="budgetBar" class="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(16,185,129,0.5)]" style="width: 0%"></div>
             </div>
         </div>
     </header>
     
-    <div class="px-5 pt-3.5 pb-2.5 flex gap-2 bg-slate-950/60 backdrop-blur-md border-b border-slate-900">
-        <button onclick="switchView('main')" id="view-main" class="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition">보유 셋업</button>
-        <button onclick="switchView('wishlist')" id="view-wishlist" class="flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800/80 transition">위시리스트</button>
-        <button onclick="switchView('deals')" id="view-deals" class="flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800/80 transition">타임딜 & 쿠폰</button>
+    <!-- 탭 메뉴 세련된 스타일 -->
+    <div class="px-5 pt-4 pb-2.5 flex gap-2 bg-slate-950/40 backdrop-blur-md border-b border-slate-900/50">
+        <button onclick="switchView('main')" id="view-main" class="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90">보유 셋업</button>
+        <button onclick="switchView('wishlist')" id="view-wishlist" class="flex-1 py-2.5 rounded-xl glass-card text-slate-300 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50">위시리스트</button>
+        <button onclick="switchView('deals')" id="view-deals" class="flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50">타임딜 & 쿠폰</button>
     </div>
 
-    <div class="px-5 py-2.5 flex gap-2 overflow-x-auto scrollbar-none text-xs bg-slate-950/40 border-b border-slate-900" id="catTabsContainer">
-        <button onclick="filterCategory('전체')" id="tab-전체" class="category-btn px-4 py-2 rounded-xl bg-slate-900 text-cyan-400 font-black border border-cyan-500/40 transition shrink-0">전체보기</button>
-        <button onclick="filterCategory('게이밍')" id="tab-게이밍" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800/80 transition shrink-0">게이밍</button>
-        <button onclick="filterCategory('사무용')" id="tab-사무용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800/80 transition shrink-0">사무용</button>
-        <button onclick="filterCategory('공용')" id="tab-공용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800/80 transition shrink-0">공용</button>
+    <div class="px-5 py-3 flex gap-2 overflow-x-auto scrollbar-none text-xs bg-transparent" id="catTabsContainer">
+        <button onclick="filterCategory('전체')" id="tab-전체" class="category-btn px-4 py-2 rounded-xl bg-slate-800 text-cyan-400 font-black border border-cyan-500/40 transition-all shrink-0 shadow-lg shadow-cyan-500/10">전체보기</button>
+        <button onclick="filterCategory('게이밍')" id="tab-게이밍" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition-all shrink-0 hover:text-white">게이밍</button>
+        <button onclick="filterCategory('사무용')" id="tab-사무용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition-all shrink-0 hover:text-white">사무용</button>
+        <button onclick="filterCategory('공용')" id="tab-공용" class="category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition-all shrink-0 hover:text-white">공용</button>
     </div>
 
     <main id="itemList" class="p-4 space-y-6 max-w-xl mx-auto"></main>
     
-    <!-- 토스트 알림창 (팝업 대체) -->
-    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all">
-        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-        <span id="toastMessage">메시지 내용</span>
+    <!-- 세련된 토스트 알림창 -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-3 transition-all">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastMessage" class="tracking-wide">메시지 내용</span>
     </div>
 
-    <!-- 예산금 수정 모달 (팝업 대체) -->
-    <div id="budgetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card w-full max-w-sm rounded-3xl p-5 relative border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+    <!-- 세련된 예산금 수정 커스텀 모달 -->
+    <div id="budgetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative border border-slate-700 shadow-2xl modal-enter">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
                 <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-wallet text-cyan-400"></i> 총 예산금 설정</h3>
-                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-white text-xl px-2 transition-colors"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="space-y-3 text-xs">
+            <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block text-slate-400 mb-1 font-bold">새로운 총 예산금 (원)</label>
-                    <input type="number" id="budgetInputModal" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold focus:border-cyan-500 transition">
+                    <label class="block text-slate-400 mb-1.5 font-bold">새로운 총 예산금 (원)</label>
+                    <input type="number" id="budgetInputModal" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none font-mono font-bold focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all shadow-inner">
                 </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="saveBudgetModal()" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 flex-1 py-2.5 rounded-xl font-black text-xs transition">저장하기</button>
-                    <button onclick="closeBudgetModal()" class="bg-slate-800 hover:bg-slate-700 text-white flex-1 py-2.5 rounded-xl text-xs transition">취소</button>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="saveBudgetModal()" class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:opacity-90 text-slate-950 flex-1 py-3 rounded-xl font-black text-xs transition-all shadow-lg shadow-cyan-500/20">저장하기</button>
+                    <button onclick="closeBudgetModal()" class="bg-slate-800 hover:bg-slate-700 text-white flex-1 py-3 rounded-xl text-xs font-bold transition-all border border-slate-700">취소</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 제품 추가 모달 -->
-    <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card w-full max-w-md rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-cyan-400"></i> 새 제품 / 특가 등록</h3>
-                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+    <!-- 세련된 가격/희망가 동시 수정 모달 -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative border border-slate-700 shadow-2xl modal-enter">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-pen text-cyan-400"></i> 가격 및 희망가 수정</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-xl px-2 transition-colors"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="addProductForm" onsubmit="submitNewProduct(event)" class="space-y-3 text-xs">
+            <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block text-slate-400 mb-1 font-bold">제품명</label>
-                    <input type="text" id="addName" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition" placeholder="예: 로지텍 마우스">
+                    <label class="block text-slate-400 mb-1.5 font-bold">현재 가격 (원)</label>
+                    <input type="number" id="editPriceInput" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none font-mono font-bold focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all shadow-inner">
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-emerald-400 mb-1.5 font-bold">희망 구매가 목표 (원)</label>
+                    <input type="number" id="editTargetInput" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none font-mono font-bold focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all shadow-inner">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="saveEditedPrice()" class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:opacity-90 text-slate-950 flex-1 py-3 rounded-xl font-black text-xs transition-all shadow-lg shadow-cyan-500/20">수정 완료</button>
+                    <button onclick="closeEditModal()" class="bg-slate-800 hover:bg-slate-700 text-white flex-1 py-3 rounded-xl text-xs font-bold transition-all border border-slate-700">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제품 추가 모달 (UI 세련화) -->
+    <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-cyan-400"></i> 새 제품 등록</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-xl px-2 transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="addProductForm" onsubmit="submitNewProduct(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1.5 font-bold">제품명</label>
+                    <input type="text" id="addName" required class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all" placeholder="예: 로지텍 마우스">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-slate-400 mb-1 font-bold">카테고리</label>
-                        <select id="addCategory" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition">
+                        <label class="block text-slate-400 mb-1.5 font-bold">카테고리</label>
+                        <select id="addCategory" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all">
                             <option value="게이밍">게이밍</option>
                             <option value="사무용">사무용</option>
                             <option value="공용">공용</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-400 mb-1 font-bold">서브 그룹</label>
-                        <input type="text" id="addSubGroup" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition" placeholder="예: 마우스">
+                        <label class="block text-slate-400 mb-1.5 font-bold">분류 그룹</label>
+                        <input type="text" id="addSubGroup" required class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all" placeholder="예: 마우스">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-slate-400 mb-1 font-bold">현재 가격 (원)</label>
-                        <input type="number" id="addPrice" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition" placeholder="예: 150000">
+                        <label class="block text-slate-400 mb-1.5 font-bold">현재 가격 (원)</label>
+                        <input type="number" id="addPrice" required class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all" placeholder="150000">
                     </div>
                     <div>
-                        <label class="block text-emerald-400 mb-1 font-bold">희망 구매가 (원)</label>
-                        <input type="number" id="addTargetPrice" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition" placeholder="예: 130000">
+                        <label class="block text-emerald-400 mb-1.5 font-bold">희망 구매가 (원)</label>
+                        <input type="number" id="addTargetPrice" required class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all" placeholder="130000">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1 font-bold">검색 쿼리</label>
-                    <input type="text" id="addQuery" required class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500 transition" placeholder="예: 로지텍 마우스">
+                    <label class="block text-slate-400 mb-1.5 font-bold">최저가 검색 쿼리</label>
+                    <input type="text" id="addQuery" required class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all" placeholder="예: 로지텍 마우스">
                 </div>
-                <div class="space-y-2 pt-1 border-t border-slate-800">
+                <div class="space-y-3 pt-2 border-t border-slate-800">
                     <div class="flex items-center gap-2">
-                        <input type="checkbox" id="addWishlist" class="w-4 h-4 accent-cyan-400 rounded">
-                        <label for="addWishlist" class="text-slate-300 font-bold cursor-pointer">구매 예정 (위시리스트)</label>
+                        <input type="checkbox" id="addWishlist" class="w-4 h-4 accent-cyan-400 rounded cursor-pointer">
+                        <label for="addWishlist" class="text-slate-300 font-bold cursor-pointer">구매 예정 (위시리스트로 등록)</label>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="checkbox" id="addDeal" class="w-4 h-4 accent-amber-400 rounded">
+                        <input type="checkbox" id="addDeal" class="w-4 h-4 accent-amber-400 rounded cursor-pointer">
                         <label for="addDeal" class="text-amber-300 font-bold cursor-pointer">타임딜 및 특가 상품 등록</label>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="addDiscount" placeholder="타임할인율(%)" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-cyan-500 transition">
-                    <input type="text" id="addCoupon" placeholder="쿠폰명" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-cyan-500 transition">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="addDiscount" placeholder="타임할인율(%)" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 transition-all">
+                    <input type="text" id="addCoupon" placeholder="쿠폰명" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 transition-all">
                 </div>
                 <div>
-                    <label class="block text-amber-400 mb-1 font-bold">타임딜 마감 일시</label>
-                    <input type="datetime-local" id="addExpires" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-cyan-500 transition">
+                    <label class="block text-amber-400 mb-1.5 font-bold">타임딜 마감 일시</label>
+                    <input type="datetime-local" id="addExpires" class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 transition-all">
                 </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 font-black py-3 rounded-xl shadow-lg mt-2 transition hover:opacity-90">제품 추가 완료</button>
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-400 to-emerald-500 text-slate-950 font-black py-3.5 rounded-xl shadow-lg mt-3 transition-all hover:opacity-90 tracking-widest text-sm">등록 완료</button>
             </form>
         </div>
     </div>
 
-    <!-- 가격 및 희망가 동시 수정 모달 -->
-    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card w-full max-w-sm rounded-3xl p-5 relative border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-pen text-cyan-400"></i> 가격 변경 및 희망가 설정</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="space-y-3 text-xs">
-                <div>
-                    <label class="block text-slate-400 mb-1 font-bold">현재 가격 변경 (원)</label>
-                    <input type="number" id="editPriceInput" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold focus:border-cyan-500 transition">
-                </div>
-                <div>
-                    <label class="block text-emerald-400 mb-1 font-bold">희망 구매가 설정 (원)</label>
-                    <input type="number" id="editTargetInput" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold focus:border-cyan-500 transition">
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="saveEditedPrice()" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 flex-1 py-2.5 rounded-xl font-black text-xs transition">수정 완료</button>
-                    <button onclick="closeEditModal()" class="bg-slate-800 hover:bg-slate-700 text-white flex-1 py-2.5 rounded-xl text-xs transition">취소</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 상세 정보 및 AI 원터치 분석 모달 -->
-    <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">제품 상세 및 AI 팩트 체크 분석</h3>
-                <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+    <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <h3 id="modalTitle" class="text-sm font-black text-white truncate pr-2">제품 상세 및 AI 팩트 체크</h3>
+                <button onclick="closeChartModal()" class="text-slate-400 hover:text-white text-xl px-2 transition-colors"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
-            <div class="mb-4">
-                <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (누적 갱신 & 전역 1~1.4년 타임라인)</label>
+            <div class="mb-5">
+                <label class="block text-purple-400 text-[11px] font-bold mb-2.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (누적 메모리 & 전역 타임라인 반영)</label>
                 <div class="grid grid-cols-3 gap-2">
-                    <button onclick="openAiSearch('Gemini')" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-1">
+                    <button onclick="openAiSearch('Gemini')" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl text-xs shadow-md transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-gem"></i> Gemini
                     </button>
-                    <button onclick="openAiSearch('ChatGPT')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-1">
+                    <button onclick="openAiSearch('ChatGPT')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl text-xs shadow-md transition-all hover:shadow-[0_0_15px_rgba(5,150,105,0.5)] flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-robot"></i> ChatGPT
                     </button>
-                    <button onclick="openAiSearch('Perplexity')" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-1">
+                    <button onclick="openAiSearch('Perplexity')" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-3 rounded-xl text-xs shadow-md transition-all hover:shadow-[0_0_15px_rgba(147,51,234,0.5)] flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-compass"></i> Perplexity
                     </button>
                 </div>
             </div>
             
-            <div class="relative w-full h-40 bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-inner mb-4">
+            <div class="relative w-full h-40 bg-slate-900/90 rounded-2xl p-3 border border-slate-700/80 shadow-inner mb-5">
                 <canvas id="priceChart"></canvas>
             </div>
 
-            <div class="pt-3 border-t border-slate-800">
-                <h4 class="text-xs font-black text-cyan-400 mb-2.5 flex items-center gap-1.5">
-                    <i class="fa-solid fa-star text-amber-400"></i> 추천 제품 풀 (인기 데스크 셋업 베스트)
+            <div class="pt-4 border-t border-slate-800">
+                <h4 class="text-xs font-black text-cyan-400 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-star text-amber-400"></i> 추천 제품 풀 (인기 데스크 셋업)
                 </h4>
                 <div id="independentRecsList" class="space-y-2"></div>
             </div>
@@ -313,19 +370,27 @@ async def serve_mobile_ui():
         
         let TOTAL_BUDGET = Number(localStorage.getItem('desk_budget')) || 1000000;
 
+        // 세련된 토스트(Toast) 커스텀 알림 함수
         function showToast(msg, isSuccess = true) {
             const toast = document.getElementById('toast');
             const messageEl = document.getElementById('toastMessage');
             const iconEl = document.getElementById('toastIcon');
             messageEl.textContent = msg;
+            
+            toast.classList.remove('hidden');
+            toast.classList.remove('toast-enter');
+            
+            // 약간의 딜레이 후 애니메이션 재시작
+            void toast.offsetWidth; 
+            
             if(isSuccess) {
                 iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
-                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all";
+                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3.5 rounded-full shadow-2xl backdrop-blur-xl text-[11px] font-black flex items-center gap-2.5 transition-all toast-enter";
             } else {
                 iconEl.className = "fa-solid fa-bullseye text-cyan-400 text-sm";
-                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-cyan-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all";
+                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-cyan-500/50 text-white px-5 py-3.5 rounded-full shadow-2xl backdrop-blur-xl text-[11px] font-black flex items-center gap-2.5 transition-all toast-enter";
             }
-            toast.classList.remove('hidden');
+            
             setTimeout(() => {
                 toast.classList.add('hidden');
             }, 3000);
@@ -344,7 +409,7 @@ async def serve_mobile_ui():
             const val = Number(document.getElementById('budgetInputModal').value);
             if(!isNaN(val) && val > 0) {
                 TOTAL_BUDGET = val;
-                localStorage.setItem('desk_budget', TOTAL_BUDGET);
+                try { localStorage.setItem('desk_budget', TOTAL_BUDGET); } catch(e){}
                 updateTotalsAndRender();
                 closeBudgetModal();
                 showToast("총 예산금이 성공적으로 변경되었습니다.");
@@ -363,25 +428,28 @@ async def serve_mobile_ui():
                         if(!i.target_price) i.target_price = Math.round(i.base_price * 0.9); 
                         if(!i.last_updated) i.last_updated = "등록일";
                     });
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e){}
                 }
                 updateTotalsAndRender();
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("데이터 로드 오류:", e); }
         }
 
         function saveAndRender() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e) { console.error("저장 공간 오류"); }
             updateTotalsAndRender();
         }
 
         function updateTotalsAndRender() {
             const total = items.filter(i => i.is_main && !i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             const wishTotal = items.filter(i => i.is_wishlist).reduce((sum, i) => sum + i.base_price, 0);
+            
+            // 구매 완료를 누른 제품 가격만 합산
             const boughtTotal = items.filter(i => i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             
             document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
             document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
 
+            // 예산금 퍼센트 업데이트
             const percent = Math.min(Math.round((boughtTotal / TOTAL_BUDGET) * 100), 100);
             document.getElementById('budgetText').textContent = `${boughtTotal.toLocaleString()}원 / ${TOTAL_BUDGET.toLocaleString()}원`;
             document.getElementById('budgetPercent').textContent = `${percent}%`;
@@ -395,6 +463,7 @@ async def serve_mobile_ui():
             if(item) {
                 item.is_wishlist = !item.is_wishlist;
                 saveAndRender();
+                if(item.is_wishlist) showToast(`"${item.name}" 위시리스트에 추가됨`);
             }
         }
 
@@ -413,18 +482,20 @@ async def serve_mobile_ui():
             currentView = view;
             const tabContainer = document.getElementById('catTabsContainer');
             
-            document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800/80 transition";
-            document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800/80 transition";
-            document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800/80 transition";
+            const inactiveClass = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50";
+            
+            document.getElementById('view-main').className = inactiveClass;
+            document.getElementById('view-wishlist').className = inactiveClass;
+            document.getElementById('view-deals').className = inactiveClass;
 
             if(view === 'main') {
-                document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition";
+                document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition-all";
                 tabContainer.style.display = 'flex';
             } else if(view === 'wishlist') {
-                document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-black text-[11px] shadow-lg shadow-purple-500/20 transition";
+                document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl bg-purple-500 text-white font-black text-[11px] shadow-lg shadow-purple-500/20 transition-all";
                 tabContainer.style.display = 'flex';
             } else {
-                document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-black text-[11px] shadow-lg shadow-amber-500/20 transition";
+                document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-black text-[11px] shadow-lg shadow-amber-500/20 transition-all";
                 tabContainer.style.display = 'none';
             }
             render();
@@ -511,7 +582,7 @@ async def serve_mobile_ui():
             if(item.target_price && item.base_price <= item.target_price) {
                 showToast('🎯 희망 구매가 도달! 지금이 최적의 구매시기입니다.', false);
             } else {
-                showToast('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
+                showToast('가격 및 희망 구매가와 변동 일자가 저장되었습니다.');
             }
         }
 
@@ -534,7 +605,7 @@ ${previousHistory}
 2. [예상 타이밍]: 1년~1년 4개월 내 전역 전까지 가장 저렴해질 시점 (구체적 시기)
 3. [최종 결론]: 지금 사야 하는가? 기다려야 하는가?`;
 
-            localStorage.setItem(contextKey, `직전 분석가: ${currentItem.base_price}원, 목표가: ${currentItem.target_price || 0}원 반영됨.`);
+            try { localStorage.setItem(contextKey, `직전 분석가: ${currentItem.base_price}원, 목표가: ${currentItem.target_price || 0}원 반영됨.`); } catch(e){}
 
             let url = "";
             if(aiName === 'Gemini') url = `https://gemini.google.com/app?q=${encodeURIComponent(q)}`;
@@ -574,16 +645,16 @@ ${previousHistory}
             const recContainer = document.getElementById('independentRecsList');
             if(recs.length > 0) {
                 recContainer.innerHTML = recs.map(rec => `
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 flex justify-between items-center transition-all hover:bg-slate-800">
                         <div class="flex items-center gap-2.5 truncate pr-2">
-                            <img src="${rec.image}" class="w-8 h-8 object-cover rounded-lg shrink-0 border border-slate-700/60" onerror="this.style.display='none';">
+                            <img src="${rec.image}" class="w-8 h-8 object-cover rounded-lg shrink-0 border border-slate-600/50" onerror="this.style.display='none';">
                             <span class="text-xs font-bold text-slate-200 truncate">${rec.name}</span>
                         </div>
                         <span class="text-xs font-mono font-black text-cyan-400 shrink-0">${rec.base_price.toLocaleString()}원</span>
                     </div>
                 `).join('');
             } else {
-                recContainer.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-2">추천 제품이 없습니다.</div>';
+                recContainer.innerHTML = '<div class="text-[11px] text-slate-500 text-center py-3">추천 제품이 없습니다.</div>';
             }
         }
 
@@ -594,7 +665,7 @@ ${previousHistory}
             ['전체', '게이밍', '사무용', '공용'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 if(btn) {
-                    btn.className = (t === cat) ? "category-btn px-4 py-2 rounded-xl bg-slate-900 text-cyan-400 font-black border border-cyan-500/40 transition shrink-0" : "category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800/80 transition shrink-0";
+                    btn.className = (t === cat) ? "category-btn px-4 py-2 rounded-xl bg-slate-800 text-cyan-400 font-black border border-cyan-500/40 transition-all shrink-0 shadow-lg shadow-cyan-500/10" : "category-btn px-4 py-2 rounded-xl glass-card text-slate-400 font-bold border border-slate-800 transition-all shrink-0 hover:text-white";
                 }
             });
             render(); 
@@ -618,17 +689,17 @@ ${previousHistory}
                 ];
                 
                 salesBannerHTML = `
-                <div class="glass-card rounded-2xl p-4 border border-amber-500/30 mb-4 bg-amber-950/10">
-                    <h3 class="text-xs font-black text-amber-400 mb-2.5 flex items-center gap-1.5">
-                        <i class="fa-solid fa-calendar-days"></i> 글로벌 대형 세일 예상 D-Day 캘린더
+                <div class="glass-card rounded-2xl p-4 border border-amber-500/40 mb-4 bg-amber-950/10 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+                    <h3 class="text-xs font-black text-amber-400 mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-days"></i> 글로벌 대형 세일 예상 D-Day
                     </h3>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2.5">
                         ${salesEvents.map(ev => {
                             const diffDays = Math.ceil((ev.date - now) / (1000 * 60 * 60 * 24));
                             return `
-                                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 flex justify-between items-center transition-all hover:bg-slate-800/80">
                                     <span class="text-[11px] font-bold text-slate-300 truncate pr-1">${ev.name}</span>
-                                    <span class="text-xs font-mono font-black text-amber-400 shrink-0">${diffDays > 0 ? `D-${diffDays}` : '진행중/종료'}</span>
+                                    <span class="text-xs font-mono font-black text-amber-400 shrink-0">${diffDays > 0 ? `D-${diffDays}` : '종료'}</span>
                                 </div>
                             `;
                         }).join('')}
@@ -641,7 +712,7 @@ ${previousHistory}
             const groups = [...new Set(filtered.map(i => i.sub_group))];
             
             if(groups.length === 0 && currentView !== 'deals') {
-                listEl.innerHTML = salesBannerHTML + '<div class="text-center text-slate-500 py-16 text-xs">등록된 제품이 없습니다.</div>';
+                listEl.innerHTML = salesBannerHTML + '<div class="text-center text-slate-500 py-20 text-xs font-bold bg-slate-900/30 rounded-2xl border border-slate-800 border-dashed">등록된 제품이 없습니다.</div>';
                 return;
             }
 
@@ -650,8 +721,8 @@ ${previousHistory}
                 const groupItems = filtered.filter(i => i.sub_group === g);
                 return `
                 <div>
-                    <h3 class="text-[11px] text-cyan-400 font-black uppercase tracking-wider mb-2.5 ml-1 flex items-center gap-1.5">
-                        <i class="fa-solid fa-layer-group text-[10px]"></i> ${g} 그룹
+                    <h3 class="text-[11px] text-cyan-400 font-black uppercase tracking-widest mb-2.5 ml-1.5 flex items-center gap-1.5 drop-shadow-md">
+                        <i class="fa-solid fa-layer-group text-[10px]"></i> ${g}
                     </h3>
                     <div class="grid grid-cols-2 gap-3">
                         ${groupItems.map(item => {
@@ -669,14 +740,15 @@ ${previousHistory}
                                 if(diffHours > 0 && diffHours <= 12) { isUrgent = true; }
                             }
 
-                            let cardClass = "glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative border border-slate-800/80 transition-all";
+                            let cardClass = "glass-card rounded-3xl overflow-hidden flex flex-col justify-between relative border border-slate-700/60 transition-all duration-300 hover:shadow-2xl hover:border-slate-600/80";
                             if(isUrgent) { 
-                                cardClass = "glass-card rounded-2xl overflow-hidden urgent-border flex flex-col justify-between relative transition-all"; 
-                            } else if(isPurchaseTime) {
-                                cardClass = "glass-card rounded-2xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all";
+                                cardClass = "glass-card rounded-3xl overflow-hidden urgent-border flex flex-col justify-between relative transition-all duration-300"; 
+                            } else if(isPurchaseTime && !item.is_bought) {
+                                cardClass = "glass-card rounded-3xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all duration-300";
                             }
                             
-                            if(item.is_bought) { cardClass += " grayscale opacity-60"; }
+                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리 (빨간 스탬프는 별도 유지)
+                            if(item.is_bought) { cardClass += " grayscale opacity-70"; }
 
                             let finalPrice = item.base_price;
                             if(item.is_deal && item.discount_rate > 0) {
@@ -685,47 +757,52 @@ ${previousHistory}
 
                             return `
                             <div class="${cardClass}">
+                                <!-- 붉은색 강렬한 리얼 스탬프 디자인 -->
                                 ${item.is_bought ? '<div class="buy-stamp">BUY</div>' : ''}
-                                ${isUrgent ? '<div class="absolute top-2 left-2 z-30 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce">⏰ 마감 12시간 전!</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2 left-2 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : '')}
                                 
-                                <div class="w-full h-32 bg-slate-900/90 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
-                                    <img src="${item.image}" class="w-full h-full object-cover rounded-xl" alt="${item.name}" onerror="this.style.display='none';">
-                                    <div class="absolute top-2 left-2 z-20" onclick="event.stopPropagation();">
-                                        <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow transition active:scale-95">
+                                ${isUrgent ? '<div class="absolute top-2.5 left-2.5 z-30 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg animate-bounce">⏰ 마감임박</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2.5 left-2.5 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : '')}
+                                
+                                <div class="w-full h-32 bg-slate-900/90 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2.5 cursor-pointer group" onclick='openChartModal(${JSON.stringify(item)})'>
+                                    <img src="${item.image}" class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500" alt="${item.name}" onerror="this.style.display='none';">
+                                    <div class="absolute top-2.5 left-2.5 z-20" onclick="event.stopPropagation();">
+                                        <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow-md transition-all active:scale-95 border border-slate-800/50">
                                             <i class="fa-${item.is_wishlist ? 'solid text-rose-500' : 'regular text-slate-400'} fa-heart text-xs"></i>
                                         </button>
                                     </div>
-                                    <div class="absolute top-2 right-2 z-20 flex gap-1" onclick="event.stopPropagation();">
-                                        <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95"><i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}</button>
-                                        <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2 py-1 rounded-lg shadow transition active:scale-95"><i class="fa-solid fa-pen"></i> 가격 변경</button>
+                                    <div class="absolute top-2.5 right-2.5 z-20 flex gap-1.5" onclick="event.stopPropagation();">
+                                        <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-emerald-400/50"><i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}</button>
+                                        <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-cyan-300/50"><i class="fa-solid fa-pen"></i> 가격 변경</button>
                                     </div>
                                 </div>
-                                <div class="p-3 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
+                                <div class="p-3.5 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
                                     
-                                    ${isPurchaseTime ? '<div class="my-1 bg-emerald-500/25 border border-emerald-500/60 text-emerald-300 text-[9px] font-black px-2 py-1 rounded-lg flex items-center justify-center gap-1 shadow animate-pulse whitespace-nowrap"><i class="fa-solid fa-bullseye"></i> 🎯 구매시기 도달! (최적가)</div>' : ''}
+                                    ${(isPurchaseTime && !item.is_bought) ? '<div class="my-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-[10px] font-black px-2 py-1 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse whitespace-nowrap"><i class="fa-solid fa-bullseye"></i> 🎯 구매시기 도달! (최적가)</div>' : ''}
 
-                                    ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono mt-0.5">희망 구매가: ${item.target_price.toLocaleString()}원</div>` : ''}
-                                    <div class="text-[9px] text-slate-400 font-mono mt-0.5">최근 변동: ${item.last_updated || '정보 없음'}</div>
-                                    ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-0.5 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
                                     <div class="flex justify-between items-center mt-1">
-                                        <div>
+                                        ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono font-bold">희망가: ${item.target_price.toLocaleString()}원</div>` : '<div></div>'}
+                                        <div class="text-[9px] text-slate-400 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">${item.last_updated || '정보 없음'}</div>
+                                    </div>
+                                    
+                                    ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-1 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30 w-fit"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
+                                    <div class="flex justify-end items-center mt-2 border-t border-slate-700/50 pt-2">
+                                        <div class="text-right">
                                             ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through block">${item.base_price.toLocaleString()}원</span>` : ''}
-                                            <span class="text-[11px] font-mono font-bold text-cyan-400">${finalPrice.toLocaleString()}원</span>
+                                            <span class="text-sm font-mono font-black text-cyan-400 drop-shadow-md">${finalPrice.toLocaleString()}원</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="p-2 bg-slate-950/90 grid grid-cols-2 gap-1.5 border-t border-slate-800/80 text-center">
-                                    <a href="${naverLink}" target="_blank" class="py-1.5 bg-[#03C75A]/20 hover:bg-[#03C75A]/30 text-[#03C75A] rounded-lg text-[10px] font-black flex items-center justify-center gap-1 transition">
+                                <div class="p-2 bg-slate-900/50 grid grid-cols-2 gap-1.5 border-t border-slate-800/80 text-center">
+                                    <a href="${naverLink}" target="_blank" class="py-2 bg-[#03C75A]/10 hover:bg-[#03C75A]/20 text-[#03C75A] rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all border border-[#03C75A]/20 hover:border-[#03C75A]/50">
                                         <i class="fa-solid fa-n"></i> 네이버
                                     </a>
-                                    <a href="${danawaLink}" target="_blank" class="py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 transition">
+                                    <a href="${danawaLink}" target="_blank" class="py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all border border-blue-500/20 hover:border-blue-500/50">
                                         <i class="fa-solid fa-d"></i> 다나와
                                     </a>
-                                    <a href="${amazonLink}" target="_blank" class="py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 transition">
+                                    <a href="${amazonLink}" target="_blank" class="py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all border border-amber-500/20 hover:border-amber-500/50">
                                         <i class="fa-brands fa-amazon"></i> 아마존
                                     </a>
-                                    <a href="${aliLink}" target="_blank" class="py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 transition">
+                                    <a href="${aliLink}" target="_blank" class="py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-[10px] font-black flex items-center justify-center gap-1.5 transition-all border border-rose-500/20 hover:border-rose-500/50">
                                         <i class="fa-solid fa-bag-shopping"></i> 알리
                                     </a>
                                 </div>
