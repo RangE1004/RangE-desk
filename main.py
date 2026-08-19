@@ -22,17 +22,17 @@ PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
 MASTER_ITEMS = [
-    {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "target_price": 210000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
-    {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "target_price": 80000, "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
-    {"id": 3, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono DM40 Pro", "query": "마오노 DM40 Pro", "global_query": "Maono DM40 Pro", "base_price": 139000, "target_price": 120000, "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
-    {"id": 4, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono PD200X", "query": "마오노 PD200X", "global_query": "Maono PD200X", "base_price": 89160, "target_price": 80000, "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
-    {"id": 5, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "오디오 인터페이스", "name": "Maonocaster G1 NEO", "query": "마오노 G1 NEO", "global_query": "Maonocaster G1 NEO", "base_price": 63850, "target_price": 60000, "image": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800", "icon": "fa-sliders"},
-    {"id": 6, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "키보드/스트림덱", "name": "Elgato Stream Deck Neo", "query": "엘가토 스트림덱 네오", "global_query": "Elgato Stream Deck Neo", "base_price": 133300, "target_price": 120000, "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800", "icon": "fa-keyboard"},
-    {"id": 7, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "사무용", "sub_group": "마우스", "name": "Logitech MX Master 4", "query": "로지텍 MX master 4", "global_query": "Logitech MX Master 4", "base_price": 179000, "target_price": 160000, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
-    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "edifier mr4", "global_query": "Edifier MR4", "base_price": 76410, "target_price": 70000, "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
-    {"id": 9, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "포터블 모니터", "name": "Zeuslap Z16P", "query": "제우스랩 Z16P", "global_query": "Zeuslap Z16P", "base_price": 150700, "target_price": 140000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800", "icon": "fa-display"},
-    {"id": 10, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "마우스 패드", "name": "Glorious GMP2 XXL White", "query": "글로리어스 GMP2 화이트 XXL", "global_query": "Glorious GMP2 XXL White", "base_price": 49900, "target_price": 45000, "image": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800", "icon": "fa-square"},
-    {"id": 11, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "데스크 선반", "name": "Desk Shelf (White/Wood)", "query": "데스크 선반 모니터 받침대 원목", "global_query": "Desk Shelf Monitor Stand Timber", "base_price": 30000, "target_price": 25000, "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800", "icon": "fa-table"}
+    {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "target_price": 210000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
+    {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "target_price": 80000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
+    {"id": 3, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono DM40 Pro", "query": "마오노 DM40 Pro", "global_query": "Maono DM40 Pro", "base_price": 139000, "target_price": 120000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
+    {"id": 4, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마이크", "name": "Maono PD200X", "query": "마오노 PD200X", "global_query": "Maono PD200X", "base_price": 89160, "target_price": 80000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800", "icon": "fa-microphone"},
+    {"id": 5, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "오디오 인터페이스", "name": "Maonocaster G1 NEO", "query": "마오노 G1 NEO", "global_query": "Maonocaster G1 NEO", "base_price": 63850, "target_price": 60000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800", "icon": "fa-sliders"},
+    {"id": 6, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "키보드/스트림덱", "name": "Elgato Stream Deck Neo", "query": "엘가토 스트림덱 네오", "global_query": "Elgato Stream Deck Neo", "base_price": 133300, "target_price": 120000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800", "icon": "fa-keyboard"},
+    {"id": 7, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "사무용", "sub_group": "마우스", "name": "Logitech MX Master 4", "query": "로지텍 MX master 4", "global_query": "Logitech MX Master 4", "base_price": 179000, "target_price": 160000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
+    {"id": 8, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "스피커", "name": "Edifier MR4", "query": "edifier mr4", "global_query": "Edifier MR4", "base_price": 76410, "target_price": 70000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1543512214-318c7553f230?w=800", "icon": "fa-volume-high"},
+    {"id": 9, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "포터블 모니터", "name": "Zeuslap Z16P", "query": "제우스랩 Z16P", "global_query": "Zeuslap Z16P", "base_price": 150700, "target_price": 140000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800", "icon": "fa-display"},
+    {"id": 10, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "마우스 패드", "name": "Glorious GMP2 XXL White", "query": "글로리어스 GMP2 화이트 XXL", "global_query": "Glorious GMP2 XXL White", "base_price": 49900, "target_price": 45000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800", "icon": "fa-square"},
+    {"id": 11, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "공용", "sub_group": "데스크 선반", "name": "Desk Shelf (White/Wood)", "query": "데스크 선반 모니터 받침대 원목", "global_query": "Desk Shelf Monitor Stand Timber", "base_price": 30000, "target_price": 25000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800", "icon": "fa-table"}
 ]
 
 RECOMMENDATION_POOL = [
@@ -107,8 +107,8 @@ async def serve_mobile_ui():
     <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 px-5 py-4 shadow-md">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-base font-black text-white flex items-center gap-2 tracking-tight font-mono">
-                    <i class="fa-solid fa-server text-cyan-400"></i> 데스크 셋업 프로 V2
+                <h1 class="text-base font-black text-white flex items-center gap-2 tracking-widest font-mono">
+                    <i class="fa-solid fa-server text-cyan-400"></i> DESK SETUP PRO V2
                 </h1>
                 <p class="text-[11px] text-slate-400 font-mono mt-0.5">제품 총 가격: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span> | 위시 총액: <span id="wishTotal" class="text-purple-400 font-bold">0원</span></p>
             </div>
@@ -116,7 +116,6 @@ async def serve_mobile_ui():
                 <i class="fa-solid fa-plus text-[11px]"></i> 제품 추가
             </button>
         </div>
-        <!-- 기능 2: 예산 대비 프로그레스 바 추가 -->
         <div class="mt-2.5 pt-2 border-t border-slate-800/80">
             <div class="flex justify-between text-[10px] text-slate-400 font-mono mb-1">
                 <span>전역 셋업 예산 달성률 (<span id="budgetText">0원 / 1,500,000원</span>)</span>
@@ -143,7 +142,7 @@ async def serve_mobile_ui():
 
     <main id="itemList" class="p-4 space-y-6 max-w-xl mx-auto"></main>
     
-    <!-- 제품 추가 모달 (목표가 입력 필드 추가) -->
+    <!-- 제품 추가 모달 -->
     <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-md rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -175,7 +174,7 @@ async def serve_mobile_ui():
                         <input type="number" id="addPrice" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 150000">
                     </div>
                     <div>
-                        <label class="block text-emerald-400 mb-1 font-bold">희망 목표가 (원)</label>
+                        <label class="block text-emerald-400 mb-1 font-bold">희망 구매가 (원)</label>
                         <input type="number" id="addTargetPrice" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none" placeholder="예: 130000">
                     </div>
                 </div>
@@ -215,7 +214,7 @@ async def serve_mobile_ui():
             </div>
             
             <div class="mb-4">
-                <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (최신 뉴스 연동)</label>
+                <label class="block text-purple-400 text-[11px] font-bold mb-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 팩트 기반 가격 예측 및 타이밍 분석 (누적 갱신 & 전역 1~1.4년 타임라인)</label>
                 <div class="grid grid-cols-3 gap-2">
                     <button onclick="openAiSearch('Gemini')" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-2.5 rounded-xl text-xs shadow transition flex items-center justify-center gap-1">
                         <i class="fa-solid fa-gem"></i> Gemini
@@ -249,7 +248,7 @@ async def serve_mobile_ui():
         let currentFilter = '전체';
         let priceChartInstance = null;
         const STORAGE_KEY = 'desk_setup_pro_v2_storage';
-        const TOTAL_BUDGET = 1500000; // 기능 2: 총 예산 기준액 (150만 원)
+        const TOTAL_BUDGET = 1500000;
 
         async function loadItems() {
             try {
@@ -259,8 +258,10 @@ async def serve_mobile_ui():
                 } else {
                     const res = await fetch('/api/items');
                     items = await res.json();
-                    // 기본 아이템들에 target_price가 없다면 기본값 세팅
-                    items.forEach(i => { if(!i.target_price) i.target_price = Math.round(i.base_price * 0.9); });
+                    items.forEach(i => { 
+                        if(!i.target_price) i.target_price = Math.round(i.base_price * 0.9); 
+                        if(!i.last_updated) i.last_updated = "등록일";
+                    });
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
                 }
                 updateTotalsAndRender();
@@ -279,7 +280,6 @@ async def serve_mobile_ui():
             document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
             document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
 
-            // 기능 2: 예산 프로그레스 바 연동 업데이트
             const percent = Math.min(Math.round((total / TOTAL_BUDGET) * 100), 100);
             document.getElementById('budgetText').textContent = `${total.toLocaleString()}원 / ${TOTAL_BUDGET.toLocaleString()}원`;
             document.getElementById('budgetPercent').textContent = `${percent}%`;
@@ -342,6 +342,9 @@ async def serve_mobile_ui():
             const coupon_name = document.getElementById('addCoupon').value || '';
             const expires_at = document.getElementById('addExpires').value || '';
 
+            const now = new Date();
+            const todayStr = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+
             const newId = items.length > 0 ? Math.max(...items.map(p => p.id)) + 1 : 1;
             const newProduct = {
                 id: newId,
@@ -359,6 +362,7 @@ async def serve_mobile_ui():
                 global_query: name,
                 base_price: base_price,
                 target_price: target_price,
+                last_updated: todayStr,
                 image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800",
                 icon: "fa-box"
             };
@@ -372,23 +376,53 @@ async def serve_mobile_ui():
 
         function manualRecord(id) {
             const item = items.find(i => i.id === id);
-            const val = prompt(`[현재가 변경] 현재 가격 입력 (목표가: ${(item.target_price || 0).toLocaleString()}원):`, item ? item.base_price : "");
-            if(val !== null && !isNaN(val) && val.trim() !== "") {
-                item.base_price = Number(val);
+            const pVal = prompt(`[가격 변경] 현재 가격 입력 (현재: ${item.base_price.toLocaleString()}원):`, item ? item.base_price : "");
+            const tVal = prompt(`[희망 구매가 변경] 희망 구매가 입력 (현재: ${(item.target_price || 0).toLocaleString()}원):`, item ? item.target_price || 0 : "");
+            
+            let updated = false;
+            if(pVal !== null && !isNaN(pVal) && pVal.trim() !== "") {
+                item.base_price = Number(pVal);
+                updated = true;
+            }
+            if(tVal !== null && !isNaN(tVal) && tVal.trim() !== "") {
+                item.target_price = Number(tVal);
+                updated = true;
+            }
+
+            if(updated) {
+                // 가격이 변동된 순간 월/일 기록
+                const now = new Date();
+                item.last_updated = `${now.getMonth() + 1}월 ${now.getDate()}일 변동`;
+                
                 saveAndRender();
                 if(item.target_price && item.base_price <= item.target_price) {
-                    alert('🎉 축하합니다! 설정하신 희망 목표가 이하로 가격이 도달했습니다!');
+                    alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달했습니다!');
                 } else {
-                    alert('가격이 변경되었습니다.');
+                    alert('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
                 }
             }
         }
 
         function openAiSearch(aiName) {
             if(!currentItem) return;
-            const q = `당신은 최정상급 IT 디바이스 및 글로벌 유통 시장 전문 애널리스트입니다. 
-분석 대상 제품: '${currentItem.name}', 기준 가격: ${currentItem.base_price.toLocaleString()}원. 
-가장 최근의 실시간 뉴스, 글로벌 환율, 반도체 및 부품 수급 상황, 거시경제 지표 및 주요 유통사(네이버, 다나와, 아마존, 알리 등)의 프로모션 동향을 철저히 분석하여 100% 팩트 기반의 상세 리포트를 작성해 주세요.`;
+            const contextKey = 'ai_context_' + currentItem.name;
+            const previousHistory = localStorage.getItem(contextKey) || "이전 분석 기록 없음 (최초 분석)";
+
+            const q = `[전문가 간결 분석 리포트]
+제품명: '${currentItem.name}'
+현재 등록가: ${currentItem.base_price.toLocaleString()}원 / 희망 구매가: ${(currentItem.target_price || 0).toLocaleString()}원
+사용자 상황: 앞으로 1년 ~ 1년 4개월 내에 전역 전 최종 구매 완료 예정.
+
+[이전 참고 맥락]
+${previousHistory}
+
+요청 사항: 
+위 데이터를 바탕으로 가장 최근의 시장 동향(환율, 유통가 등)을 반영하여 아래 내용만 간결하게 핵심 위주로 요약해 주세요.
+1. [현재 가격 평가]: 현재 가격이 적정한가?
+2. [예상 타이밍]: 1년~1년 4개월 내 전역 전까지 가장 저렴해질 시점 (구체적 시기)
+3. [최종 결론]: 지금 사야 하는가? 기다려야 하는가?`;
+
+            localStorage.setItem(contextKey, `직전 분석가: ${currentItem.base_price}원, 목표가: ${currentItem.target_price || 0}원 반영됨.`);
 
             let url = "";
             if(aiName === 'Gemini') url = `https://gemini.google.com/app?q=${encodeURIComponent(q)}`;
@@ -514,7 +548,6 @@ async def serve_mobile_ui():
                             const amazonLink = `https://www.amazon.com/s?k=${encodeURIComponent(item.global_query)}`;
                             const aliLink = `https://ko.aliexpress.com/w/wholesale-${encodeURIComponent(item.global_query)}.html`;
 
-                            // 기능 1: 목표가 달성 여부 판별
                             const isTargetReached = item.target_price && item.base_price <= item.target_price;
 
                             let isUrgent = false;
@@ -536,7 +569,6 @@ async def serve_mobile_ui():
                             return `
                             <div class="${cardClass}">
                                 ${item.is_bought ? '<div class="buy-stamp">BUY</div>' : ''}
-                                <!-- 기능 1: 목표가 달성 뱃지 표시 -->
                                 ${isTargetReached ? '<div class="absolute top-2 left-2 z-30 bg-emerald-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg animate-pulse">🎯 목표가 달성!</div>' : (isUrgent ? '<div class="absolute top-2 left-2 z-30 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce">⏰ 마감 12시간 전!</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2 left-2 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : ''))}
                                 
                                 <div class="w-full h-32 bg-slate-900 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
@@ -553,7 +585,8 @@ async def serve_mobile_ui():
                                 </div>
                                 <div class="p-3 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
-                                    ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono mt-0.5">목표가: ${item.target_price.toLocaleString()}원</div>` : ''}
+                                    ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono mt-0.5">희망 구매가: ${item.target_price.toLocaleString()}원</div>` : ''}
+                                    <div class="text-[9px] text-slate-400 font-mono mt-0.5">최근 변동: ${item.last_updated || '정보 없음'}</div>
                                     ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-0.5 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
                                     <div class="flex justify-between items-center mt-1">
                                         <div>
