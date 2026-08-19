@@ -110,6 +110,13 @@ async def serve_mobile_ui():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DESK SETUP PRO V2</title>
+    
+    <!-- 모바일 PWA 및 아이콘 설정 (삼성 갤럭시 / 아이폰 완벽 대응) -->
+    <meta name="theme-color" content="#030712">
+    <link rel="icon" type="image/jpeg" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Desk Setup Pro V2","short_name":"Setup Pro","display":"standalone","background_color":"#030712","theme_color":"#030712"}'>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -143,11 +150,11 @@ async def serve_mobile_ui():
         
         /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
-            0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
-            50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
-            100% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
+            0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
+            100% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
         }
-        .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
+        .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
 
         /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
@@ -170,7 +177,6 @@ async def serve_mobile_ui():
     <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-2xl border-b border-slate-800/80 px-5 py-4 shadow-xl">
         <div class="flex justify-between items-center">
             <div>
-                <!-- 그라데이션이 들어간 멋진 타이틀 텍스트 -->
                 <h1 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400 flex items-center gap-2 tracking-widest font-mono drop-shadow-md">
                     <i class="fa-solid fa-layer-group text-cyan-400 drop-shadow-none"></i> DESK SETUP PRO
                 </h1>
@@ -194,7 +200,6 @@ async def serve_mobile_ui():
         </div>
     </header>
     
-    <!-- 탭 메뉴 세련된 스타일 -->
     <div class="px-5 pt-4 pb-2.5 flex gap-2 bg-slate-950/40 backdrop-blur-md border-b border-slate-900/50">
         <button onclick="switchView('main')" id="view-main" class="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90">보유 셋업</button>
         <button onclick="switchView('wishlist')" id="view-wishlist" class="flex-1 py-2.5 rounded-xl glass-card text-slate-300 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50">위시리스트</button>
@@ -457,7 +462,7 @@ async def serve_mobile_ui():
             if(item) {
                 item.is_wishlist = !item.is_wishlist;
                 saveAndRender();
-                if(item.is_wishlist) showToast(`"${item.name}" 위시리스트에 추가됨`);
+                if(item.is_wishlist) showToast(`"${item.name}" 위시리스트 추가됨`);
             }
         }
 
@@ -467,7 +472,7 @@ async def serve_mobile_ui():
                 item.is_bought = !item.is_bought;
                 saveAndRender();
                 if(item.is_bought) {
-                    showToast(`"${item.name}" 구매 완료! 스탬프가 찍혔습니다.`);
+                    showToast(`"${item.name}" 구매 완료! 스탬프 획득.`);
                 }
             }
         }
@@ -576,7 +581,7 @@ async def serve_mobile_ui():
             if(item.target_price && item.base_price <= item.target_price) {
                 showToast('🎯 희망 구매가 도달! 지금이 최적의 구매시기입니다.', false);
             } else {
-                showToast('가격 및 희망 구매가와 변동 일자가 저장되었습니다.');
+                showToast('가격/희망가 및 변동 일자가 저장되었습니다.');
             }
         }
 
@@ -777,13 +782,13 @@ ${previousHistory}
                                         ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-1 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30 w-fit"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
                                     </div>
                                     
-                                    <!-- 구매 및 가격 변경 버튼을 제품 정보 최하단으로 완전히 빼냄 (사진 간섭 X) -->
-                                    <div class="flex flex-col gap-2 mt-2.5 border-t border-slate-700/50 pt-2.5">
+                                    <!-- 구매 및 가격 변경 버튼, 그리고 날짜 배치 -->
+                                    <div class="flex flex-col gap-2.5 mt-2.5 border-t border-slate-700/50 pt-3">
                                         
                                         <!-- 가격과 날짜가 한 줄에 나오도록 배치 -->
-                                        <div class="flex items-baseline gap-1.5">
+                                        <div class="flex items-baseline gap-1.5 truncate">
                                             ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through mr-1">${item.base_price.toLocaleString()}원</span>` : ''}
-                                            <span class="text-sm font-mono font-black text-cyan-400 drop-shadow-md leading-none">${finalPrice.toLocaleString()}원</span>
+                                            <span class="text-[13px] font-mono font-black text-cyan-400 drop-shadow-md leading-none">${finalPrice.toLocaleString()}원</span>
                                             <span class="text-[9px] text-slate-400 font-mono leading-none tracking-tight">${item.last_updated ? item.last_updated.replace(' 변동', '') : '등록일'}</span>
                                         </div>
 
