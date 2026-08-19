@@ -11,7 +11,7 @@ from duckduckgo_search import DDGS
 
 app = FastAPI(title="Desk Setup Pro V2")
 
-# CORS 설정 (외부 접속 허용 및 안정성 확보)
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,7 +23,6 @@ app.add_middleware(
 PRODUCTS_FILE = "products_master_final.json"
 RECOMMENDATIONS_FILE = "recommendations_master.json"
 
-# 초기 데이터 마스터셋
 MASTER_ITEMS = [
     {"id": 1, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "마우스", "name": "Razer Basilisk V3 Pro 35K", "query": "Razer Basilisk V3 Pro 35K", "global_query": "Razer Basilisk V3 Pro 35K", "base_price": 239000, "target_price": 210000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800", "icon": "fa-computer-mouse"},
     {"id": 2, "is_main": True, "is_wishlist": False, "is_deal": False, "is_bought": False, "category": "게이밍", "sub_group": "이어폰", "name": "AZLA SednaEarfit Azel Edition G Gen 3", "query": "아즈라 아젤 에디션 G 3세대", "global_query": "AZLA SednaEarfit Azel Edition G Gen 3", "base_price": 89100, "target_price": 80000, "last_updated": "등록일", "image": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800", "icon": "fa-headphones"},
@@ -46,7 +45,6 @@ RECOMMENDATION_POOL = [
     {"id": 205, "name": "Dell UltraSharp U2723QE 4K 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
 
-# JSON 데이터 안정적 초기화 (예외 처리 강화)
 def init_files():
     try:
         if not os.path.exists(PRODUCTS_FILE):
@@ -88,7 +86,6 @@ async def get_recommendations(sub_group: str = Query(...)):
         matched = recs[:3]
     return matched
 
-# AI 실시간 리서치 백엔드 (안정성 강화)
 @app.get("/api/research/{name}")
 async def research(name: str):
     try:
@@ -102,6 +99,26 @@ async def research(name: str):
     except: 
         return {"status": "error"}
 
+# 🔥 안드로이드 바탕화면 아이콘을 강제로 씌우는 전용 서버 경로 추가
+@app.get("/manifest.json")
+async def get_manifest():
+    return {
+        "name": "Desk Setup Pro V2",
+        "short_name": "Setup Pro",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#030712",
+        "theme_color": "#030712",
+        "icons": [
+            {
+                "src": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop",
+                "sizes": "512x512",
+                "type": "image/jpeg",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_mobile_ui():
     return """<!DOCTYPE html>
@@ -111,24 +128,22 @@ async def serve_mobile_ui():
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DESK SETUP PRO V2</title>
     
-    <!-- 모바일 PWA 및 아이콘 설정 (삼성 갤럭시 안드로이드 아이콘 강제 적용 완료) -->
+    <!-- 정식 앱 매니페스트 호출 (버전 쿼리를 달아서 안드로이드 강제 새로고침 유도) -->
     <meta name="theme-color" content="#030712">
+    <link rel="manifest" href="/manifest.json?v=3">
     <link rel="icon" type="image/jpeg" sizes="512x512" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Desk Setup Pro V2","short_name":"Setup Pro","display":"standalone","background_color":"#030712","theme_color":"#030712","icons":[{"src":"https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop","sizes":"512x512","type":"image/jpeg"}]}'>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 깊고 세련된 프리미엄 다크 그라데이션 배경 */
         body { 
             -webkit-tap-highlight-color: transparent; 
             background: linear-gradient(135deg, #030712 0%, #0f172a 100%);
             min-height: 100vh;
         }
         
-        /* 글래스모피즘 카드 디자인 강화 */
         .glass-card { 
             background: rgba(15, 23, 42, 0.75); 
             backdrop-filter: blur(20px); 
@@ -136,11 +151,9 @@ async def serve_mobile_ui():
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); 
         }
         
-        /* 입력 폼 포커스 시 부드러운 전환 */
         input, select { transition: all 0.3s ease; }
         input:focus, select:focus { box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); }
 
-        /* 타임딜 임박 붉은 네온빛 */
         @keyframes urgent-glow {
             0% { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.7); }
             50% { border-color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
@@ -148,7 +161,6 @@ async def serve_mobile_ui():
         }
         .urgent-border { animation: urgent-glow 1.5s infinite linear; border-width: 2px !important; }
         
-        /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
             0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
             50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
@@ -156,7 +168,6 @@ async def serve_mobile_ui():
         }
         .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
 
-        /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
             position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
             border: 4px dashed #dc2626; color: #dc2626; font-weight: 900; font-size: 2.2rem; padding: 6px 20px;
@@ -165,7 +176,6 @@ async def serve_mobile_ui():
             background-color: rgba(3, 7, 18, 0.6); font-family: monospace; text-shadow: 0 0 4px rgba(220, 38, 38, 0.8);
         }
 
-        /* 부드러운 페이드 인/아웃 애니메이션 */
         .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
@@ -177,7 +187,6 @@ async def serve_mobile_ui():
     <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-2xl border-b border-slate-800/80 px-5 py-4 shadow-xl">
         <div class="flex justify-between items-center">
             <div>
-                <!-- 그라데이션이 들어간 멋진 타이틀 텍스트 -->
                 <h1 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400 flex items-center gap-2 tracking-widest font-mono drop-shadow-md">
                     <i class="fa-solid fa-layer-group text-cyan-400 drop-shadow-none"></i> DESK SETUP PRO
                 </h1>
@@ -201,7 +210,6 @@ async def serve_mobile_ui():
         </div>
     </header>
     
-    <!-- 탭 메뉴 세련된 스타일 -->
     <div class="px-5 pt-4 pb-2.5 flex gap-2 bg-slate-950/40 backdrop-blur-md border-b border-slate-900/50">
         <button onclick="switchView('main')" id="view-main" class="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90">보유 셋업</button>
         <button onclick="switchView('wishlist')" id="view-wishlist" class="flex-1 py-2.5 rounded-xl glass-card text-slate-300 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50">위시리스트</button>
@@ -217,13 +225,11 @@ async def serve_mobile_ui():
 
     <main id="itemList" class="p-4 space-y-6 max-w-xl mx-auto"></main>
     
-    <!-- 세련된 토스트 알림창 -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-3 transition-all">
         <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
         <span id="toastMessage" class="tracking-wide">메시지 내용</span>
     </div>
 
-    <!-- 세련된 예산금 수정 커스텀 모달 -->
     <div id="budgetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative border border-slate-700 shadow-2xl modal-enter">
             <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
@@ -243,7 +249,6 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 세련된 가격/희망가 동시 수정 모달 -->
     <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 relative border border-slate-700 shadow-2xl modal-enter">
             <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
@@ -267,7 +272,6 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 제품 추가 모달 (UI 세련화) -->
     <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-md rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
             <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
@@ -330,7 +334,6 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 상세 정보 및 AI 원터치 분석 모달 -->
     <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 transition-opacity">
         <div class="glass-card w-full max-w-lg rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -377,7 +380,6 @@ async def serve_mobile_ui():
         
         let TOTAL_BUDGET = Number(localStorage.getItem('desk_budget')) || 1000000;
 
-        // 세련된 토스트(Toast) 커스텀 알림 함수
         function showToast(msg, isSuccess = true) {
             const toast = document.getElementById('toast');
             const messageEl = document.getElementById('toastMessage');
@@ -386,7 +388,7 @@ async def serve_mobile_ui():
             
             toast.classList.remove('hidden');
             toast.classList.remove('toast-enter');
-            void toast.offsetWidth; // 리플로우 유도하여 애니메이션 재시작
+            void toast.offsetWidth; 
             
             if(isSuccess) {
                 iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
@@ -443,14 +445,11 @@ async def serve_mobile_ui():
         function updateTotalsAndRender() {
             const total = items.filter(i => i.is_main && !i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             const wishTotal = items.filter(i => i.is_wishlist).reduce((sum, i) => sum + i.base_price, 0);
-            
-            // 구매 완료를 누른 제품 가격만 합산
             const boughtTotal = items.filter(i => i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             
             document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
             document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
 
-            // 구매 완료 금액 기준으로 예산금 퍼센트 업데이트
             const percent = Math.min(Math.round((boughtTotal / TOTAL_BUDGET) * 100), 100);
             document.getElementById('budgetText').textContent = `${boughtTotal.toLocaleString()}원 / ${TOTAL_BUDGET.toLocaleString()}원`;
             document.getElementById('budgetPercent').textContent = `${percent}%`;
@@ -748,6 +747,7 @@ ${previousHistory}
                                 cardClass = "glass-card rounded-3xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all duration-300";
                             }
                             
+                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리 (빨간 스탬프는 별도 유지)
                             if(item.is_bought) { cardClass += " grayscale opacity-70"; }
 
                             let finalPrice = item.base_price;
@@ -832,7 +832,3 @@ ${previousHistory}
     </script>
 </body>
 </html>
-"""
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
