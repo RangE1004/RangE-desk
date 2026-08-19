@@ -111,11 +111,11 @@ async def serve_mobile_ui():
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DESK SETUP PRO V2</title>
     
-    <!-- 모바일 PWA 및 아이콘 설정 (삼성 갤럭시 / 아이폰 완벽 대응) -->
+    <!-- 모바일 PWA 및 아이콘 설정 (삼성 갤럭시 안드로이드 아이콘 강제 적용 완료) -->
     <meta name="theme-color" content="#030712">
-    <link rel="icon" type="image/jpeg" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
+    <link rel="icon" type="image/jpeg" sizes="512x512" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop">
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Desk Setup Pro V2","short_name":"Setup Pro","display":"standalone","background_color":"#030712","theme_color":"#030712"}'>
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Desk Setup Pro V2","short_name":"Setup Pro","display":"standalone","background_color":"#030712","theme_color":"#030712","icons":[{"src":"https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=512&h=512&fit=crop","sizes":"512x512","type":"image/jpeg"}]}'>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -177,6 +177,7 @@ async def serve_mobile_ui():
     <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-2xl border-b border-slate-800/80 px-5 py-4 shadow-xl">
         <div class="flex justify-between items-center">
             <div>
+                <!-- 그라데이션이 들어간 멋진 타이틀 텍스트 -->
                 <h1 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400 flex items-center gap-2 tracking-widest font-mono drop-shadow-md">
                     <i class="fa-solid fa-layer-group text-cyan-400 drop-shadow-none"></i> DESK SETUP PRO
                 </h1>
@@ -200,6 +201,7 @@ async def serve_mobile_ui():
         </div>
     </header>
     
+    <!-- 탭 메뉴 세련된 스타일 -->
     <div class="px-5 pt-4 pb-2.5 flex gap-2 bg-slate-950/40 backdrop-blur-md border-b border-slate-900/50">
         <button onclick="switchView('main')" id="view-main" class="flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90">보유 셋업</button>
         <button onclick="switchView('wishlist')" id="view-wishlist" class="flex-1 py-2.5 rounded-xl glass-card text-slate-300 font-bold text-[11px] border border-slate-700/50 transition-all hover:bg-slate-800/50">위시리스트</button>
@@ -746,7 +748,6 @@ ${previousHistory}
                                 cardClass = "glass-card rounded-3xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all duration-300";
                             }
                             
-                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리 (빨간 스탬프는 별도 유지)
                             if(item.is_bought) { cardClass += " grayscale opacity-70"; }
 
                             let finalPrice = item.base_price;
