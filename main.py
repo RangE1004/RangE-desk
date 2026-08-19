@@ -205,6 +205,30 @@ async def serve_mobile_ui():
         </div>
     </div>
 
+    <!-- 가격 및 희망가 동시 수정 모달 (한번에 뜨는 방식) -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-5 relative border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-pen text-cyan-400"></i> 가격 변경 및 희망가 설정</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-bold">현재 가격 변경 (원)</label>
+                    <input type="number" id="editPriceInput" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-emerald-400 mb-1 font-bold">희망 구매가 설정 (원)</label>
+                    <input type="number" id="editTargetInput" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveEditedPrice()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 flex-1 py-2.5 rounded-xl font-black text-xs transition">수정 완료</button>
+                    <button onclick="closeEditModal()" class="bg-slate-700 hover:bg-slate-600 text-white flex-1 py-2.5 rounded-xl text-xs transition">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 상세 정보 및 AI 원터치 분석 모달 -->
     <div id="chartModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-lg rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -247,6 +271,7 @@ async def serve_mobile_ui():
         let currentView = 'main';
         let currentFilter = '전체';
         let priceChartInstance = null;
+        let editingItemId = null; // 수정 중인 아이템 ID 추적
         const STORAGE_KEY = 'desk_setup_pro_v2_storage';
         const TOTAL_BUDGET = 1500000;
 
@@ -374,32 +399,40 @@ async def serve_mobile_ui():
             alert('새 제품이 성공적으로 추가되었습니다!');
         }
 
+        // 가격 변경 버튼 클릭 시 두번 팝업 대신 한 번에 입력하는 커스텀 모달 열기
         function manualRecord(id) {
             const item = items.find(i => i.id === id);
-            const pVal = prompt(`[가격 변경] 현재 가격 입력 (현재: ${item.base_price.toLocaleString()}원):`, item ? item.base_price : "");
-            const tVal = prompt(`[희망 구매가 변경] 희망 구매가 입력 (현재: ${(item.target_price || 0).toLocaleString()}원):`, item ? item.target_price || 0 : "");
-            
-            let updated = false;
-            if(pVal !== null && !isNaN(pVal) && pVal.trim() !== "") {
-                item.base_price = Number(pVal);
-                updated = true;
-            }
-            if(tVal !== null && !isNaN(tVal) && tVal.trim() !== "") {
-                item.target_price = Number(tVal);
-                updated = true;
-            }
+            if(!item) return;
+            editingItemId = id;
+            document.getElementById('editPriceInput').value = item.base_price;
+            document.getElementById('editTargetInput').value = item.target_price || 0;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
 
-            if(updated) {
-                // 가격이 변동된 순간 월/일 기록
-                const now = new Date();
-                item.last_updated = `${now.getMonth() + 1}월 ${now.getDate()}일 변동`;
-                
-                saveAndRender();
-                if(item.target_price && item.base_price <= item.target_price) {
-                    alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달했습니다!');
-                } else {
-                    alert('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
-                }
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            editingItemId = null;
+        }
+
+        function saveEditedPrice() {
+            if(editingItemId === null) return;
+            const item = items.find(i => i.id === editingItemId);
+            const newPrice = Number(document.getElementById('editPriceInput').value);
+            const newTarget = Number(document.getElementById('editTargetInput').value);
+
+            if(!isNaN(newPrice)) item.base_price = newPrice;
+            if(!isNaN(newTarget)) item.target_price = newTarget;
+
+            const now = new Date();
+            item.last_updated = `${now.getMonth() + 1}월 ${now.getDate()}일 변동`;
+
+            saveAndRender();
+            closeEditModal();
+
+            if(item.target_price && item.base_price <= item.target_price) {
+                alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달했습니다!');
+            } else {
+                alert('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
             }
         }
 
