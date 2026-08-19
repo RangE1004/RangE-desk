@@ -46,7 +46,7 @@ RECOMMENDATION_POOL = [
     {"id": 205, "name": "Dell UltraSharp U2723QE 4K 모니터", "sub_group": "포터블 모니터", "base_price": 750000, "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800"}
 ]
 
-# JSON 데이터 안정적 초기화
+# JSON 데이터 안정적 초기화 (예외 처리 강화)
 def init_files():
     try:
         if not os.path.exists(PRODUCTS_FILE):
@@ -143,11 +143,11 @@ async def serve_mobile_ui():
         
         /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
-            0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
-            50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
-            100% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
+            0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
+            100% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
         }
-        .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
+        .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
 
         /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
@@ -379,7 +379,7 @@ async def serve_mobile_ui():
             
             toast.classList.remove('hidden');
             toast.classList.remove('toast-enter');
-            void toast.offsetWidth; 
+            void toast.offsetWidth; // 리플로우 유도하여 애니메이션 재시작
             
             if(isSuccess) {
                 iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
@@ -443,7 +443,7 @@ async def serve_mobile_ui():
             document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
             document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
 
-            // 예산금 퍼센트 업데이트
+            // 구매 완료 금액 기준으로 예산금 퍼센트 업데이트
             const percent = Math.min(Math.round((boughtTotal / TOTAL_BUDGET) * 100), 100);
             document.getElementById('budgetText').textContent = `${boughtTotal.toLocaleString()}원 / ${TOTAL_BUDGET.toLocaleString()}원`;
             document.getElementById('budgetPercent').textContent = `${percent}%`;
@@ -741,6 +741,7 @@ ${previousHistory}
                                 cardClass = "glass-card rounded-3xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all duration-300";
                             }
                             
+                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리 (빨간 스탬프는 별도 유지)
                             if(item.is_bought) { cardClass += " grayscale opacity-70"; }
 
                             let finalPrice = item.base_price;
@@ -753,40 +754,45 @@ ${previousHistory}
                                 <!-- 강렬한 붉은색 스탬프 디자인 -->
                                 ${item.is_bought ? '<div class="buy-stamp">BUY</div>' : ''}
                                 
-                                <!-- 타임딜 마감 배너 (우측 상단 하트와 겹치지 않도록 좌측 상단 유지) -->
+                                <!-- 타임딜 마감 배너 -->
                                 ${isUrgent ? '<div class="absolute top-2.5 left-2.5 z-30 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg animate-bounce">⏰ 마감임박</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2.5 left-2.5 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : '')}
                                 
                                 <div class="w-full h-32 bg-slate-900/90 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2.5 cursor-pointer group" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <img src="${item.image}" class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500" alt="${item.name}" onerror="this.style.display='none';">
                                     
-                                    <!-- 위시리스트(하트) 우측 상단으로 이동하여 겹침 방지 -->
+                                    <!-- 위시리스트(하트) 독립 배치 -->
                                     <div class="absolute top-2.5 right-2.5 z-20" onclick="event.stopPropagation();">
-                                        <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow-md transition-all active:scale-95 border border-slate-800/50">
-                                            <i class="fa-${item.is_wishlist ? 'solid text-rose-500' : 'regular text-slate-400'} fa-heart text-xs"></i>
+                                        <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow-md transition-all active:scale-95 border border-slate-800/50 flex items-center justify-center">
+                                            <i class="fa-${item.is_wishlist ? 'solid text-rose-500' : 'regular text-slate-400'} fa-heart text-sm"></i>
                                         </button>
                                     </div>
-                                    
-                                    <!-- 구매완료 & 가격변경 버튼 우측 하단으로 이동하여 겹침 완벽 해결 -->
-                                    <div class="absolute bottom-2.5 right-2.5 z-20 flex gap-1.5 w-full justify-end px-2.5" onclick="event.stopPropagation();">
-                                        <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-emerald-400/50"><i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}</button>
-                                        <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-cyan-300/50"><i class="fa-solid fa-pen"></i> 가격 변경</button>
-                                    </div>
                                 </div>
-                                <div class="p-3.5 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
-                                    <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
-                                    
-                                    ${(isPurchaseTime && !item.is_bought) ? '<div class="my-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-[10px] font-black px-2 py-1 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse whitespace-nowrap"><i class="fa-solid fa-bullseye"></i> 🎯 구매시기 도달! (최적가)</div>' : ''}
-
-                                    <div class="flex justify-between items-center mt-1">
-                                        ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono font-bold">희망가: ${item.target_price.toLocaleString()}원</div>` : '<div></div>'}
-                                        <div class="text-[9px] text-slate-400 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">${item.last_updated || '정보 없음'}</div>
+                                <div class="p-3.5 cursor-pointer flex flex-col justify-between" onclick='openChartModal(${JSON.stringify(item)})'>
+                                    <div>
+                                        <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
+                                        
+                                        ${(isPurchaseTime && !item.is_bought) ? '<div class="my-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-[10px] font-black px-2 py-1 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse whitespace-nowrap"><i class="fa-solid fa-bullseye"></i> 🎯 구매시기 도달! (최적가)</div>' : ''}
+                                        
+                                        <div class="flex justify-between items-center mt-1.5">
+                                            ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono font-bold">희망가: ${item.target_price.toLocaleString()}원</div>` : '<div></div>'}
+                                            <div class="text-[9px] text-slate-400 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">${item.last_updated || '정보 없음'}</div>
+                                        </div>
+                                        ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-1 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30 w-fit"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
                                     </div>
                                     
-                                    ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-1 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30 w-fit"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
-                                    <div class="flex justify-end items-center mt-2 border-t border-slate-700/50 pt-2">
-                                        <div class="text-right">
-                                            ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through block">${item.base_price.toLocaleString()}원</span>` : ''}
-                                            <span class="text-sm font-mono font-black text-cyan-400 drop-shadow-md">${finalPrice.toLocaleString()}원</span>
+                                    <!-- 구매 및 가격 변경 버튼 위치 변경 (사진을 가리지 않고 하단에 독립 배치) -->
+                                    <div class="flex justify-between items-end mt-2.5 border-t border-slate-700/50 pt-2.5">
+                                        <div class="text-left flex-1 truncate">
+                                            ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through block mb-0.5">${item.base_price.toLocaleString()}원</span>` : ''}
+                                            <span class="text-sm font-mono font-black text-cyan-400 drop-shadow-md leading-none">${finalPrice.toLocaleString()}원</span>
+                                        </div>
+                                        <div class="flex gap-1.5 shrink-0" onclick="event.stopPropagation();">
+                                            <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-emerald-400/50 flex items-center gap-1">
+                                                <i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매'}
+                                            </button>
+                                            <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-cyan-300/50 flex items-center gap-1">
+                                                <i class="fa-solid fa-pen"></i> 수정
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
