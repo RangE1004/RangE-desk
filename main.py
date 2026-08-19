@@ -97,7 +97,6 @@ async def serve_mobile_ui():
         }
         .urgent-border { animation: urgent-glow 1.5s infinite linear; border-width: 2px !important; }
         
-        /* 세련되고 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
             0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
             50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
@@ -105,12 +104,13 @@ async def serve_mobile_ui():
         }
         .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
 
-        /* 클래식하고 강렬한 빨간색 스탬프 스타일 */
+        /* 세련되고 강렬한 빨간색 진짜 도장(스탬프) 느낌 */
         .buy-stamp {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
-            border: 4px solid #ef4444; color: #ef4444; font-weight: 900; font-size: 2.2rem; padding: 6px 18px;
-            letter-spacing: 3px; text-transform: uppercase; pointer-events: none; z-index: 30; opacity: 0.9;
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); border-radius: 12px; background-color: rgba(3, 7, 18, 0.6);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-14deg);
+            border: 4px dashed #dc2626; color: #dc2626; font-weight: 900; font-size: 2.3rem; padding: 6px 20px;
+            letter-spacing: 4px; text-transform: uppercase; pointer-events: none; z-index: 30; opacity: 0.95;
+            box-shadow: inset 0 0 15px rgba(220, 38, 38, 0.35), 0 0 20px rgba(220, 38, 38, 0.45); border-radius: 10px;
+            background-color: rgba(3, 7, 18, 0.55); font-family: monospace; text-shadow: 0 0 3px rgba(220, 38, 38, 0.7);
         }
     </style>
 </head>
@@ -153,6 +153,32 @@ async def serve_mobile_ui():
 
     <main id="itemList" class="p-4 space-y-6 max-w-xl mx-auto"></main>
     
+    <!-- 토스트 알림창 (팝업 대체) -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toastMessage">메시지 내용</span>
+    </div>
+
+    <!-- 예산금 수정 모달 (팝업 대체) -->
+    <div id="budgetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-5 relative border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-wallet text-cyan-400"></i> 총 예산금 설정</h3>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-white text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-bold">새로운 총 예산금 (원)</label>
+                    <input type="number" id="budgetInputModal" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none font-mono font-bold focus:border-cyan-500 transition">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveBudgetModal()" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 flex-1 py-2.5 rounded-xl font-black text-xs transition">저장하기</button>
+                    <button onclick="closeBudgetModal()" class="bg-slate-800 hover:bg-slate-700 text-white flex-1 py-2.5 rounded-xl text-xs transition">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 제품 추가 모달 -->
     <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-md rounded-3xl p-5 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -287,12 +313,41 @@ async def serve_mobile_ui():
         
         let TOTAL_BUDGET = Number(localStorage.getItem('desk_budget')) || 1000000;
 
+        function showToast(msg, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const messageEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+            messageEl.textContent = msg;
+            if(isSuccess) {
+                iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
+                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all";
+            } else {
+                iconEl.className = "fa-solid fa-bullseye text-cyan-400 text-sm";
+                toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-cyan-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl text-xs font-bold flex items-center gap-2.5 transition-all";
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
         function editBudget() {
-            const val = prompt("새로운 총 예산금(원)을 입력하세요:", TOTAL_BUDGET);
-            if(val !== null && !isNaN(val) && val.trim() !== "") {
-                TOTAL_BUDGET = Number(val);
+            document.getElementById('budgetInputModal').value = TOTAL_BUDGET;
+            document.getElementById('budgetModal').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budgetModal').classList.add('hidden');
+        }
+
+        function saveBudgetModal() {
+            const val = Number(document.getElementById('budgetInputModal').value);
+            if(!isNaN(val) && val > 0) {
+                TOTAL_BUDGET = val;
                 localStorage.setItem('desk_budget', TOTAL_BUDGET);
                 updateTotalsAndRender();
+                closeBudgetModal();
+                showToast("총 예산금이 성공적으로 변경되었습니다.");
             }
         }
 
@@ -322,14 +377,11 @@ async def serve_mobile_ui():
         function updateTotalsAndRender() {
             const total = items.filter(i => i.is_main && !i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             const wishTotal = items.filter(i => i.is_wishlist).reduce((sum, i) => sum + i.base_price, 0);
-            
-            // 구매 완료를 누른 제품들의 실제 가격 합산액 계산
             const boughtTotal = items.filter(i => i.is_bought).reduce((sum, i) => sum + i.base_price, 0);
             
             document.getElementById('totalAsset').textContent = total.toLocaleString() + '원';
             document.getElementById('wishTotal').textContent = wishTotal.toLocaleString() + '원';
 
-            // 구매 완료된 금액을 기준으로 예산금 퍼센트 측정
             const percent = Math.min(Math.round((boughtTotal / TOTAL_BUDGET) * 100), 100);
             document.getElementById('budgetText').textContent = `${boughtTotal.toLocaleString()}원 / ${TOTAL_BUDGET.toLocaleString()}원`;
             document.getElementById('budgetPercent').textContent = `${percent}%`;
@@ -351,6 +403,9 @@ async def serve_mobile_ui():
             if(item) {
                 item.is_bought = !item.is_bought;
                 saveAndRender();
+                if(item.is_bought) {
+                    showToast(`"${item.name}" 구매가 완료 처리되었습니다!`);
+                }
             }
         }
 
@@ -358,9 +413,9 @@ async def serve_mobile_ui():
             currentView = view;
             const tabContainer = document.getElementById('catTabsContainer');
             
-            document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800 transition";
-            document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800 transition";
-            document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800 transition";
+            document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800/80 transition";
+            document.getElementById('view-wishlist').className = "flex-1 py-2.5 rounded-xl glass-card text-slate-400 font-bold text-[11px] border border-slate-800/80 transition";
+            document.getElementById('view-deals').className = "flex-1 py-2.5 rounded-xl glass-card text-amber-400 font-bold text-[11px] border border-slate-800/80 transition";
 
             if(view === 'main') {
                 document.getElementById('view-main').className = "flex-1 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-[11px] shadow-lg shadow-cyan-500/20 transition";
@@ -421,7 +476,7 @@ async def serve_mobile_ui():
             saveAndRender();
             closeAddModal();
             document.getElementById('addProductForm').reset();
-            alert('새 제품이 성공적으로 추가되었습니다!');
+            showToast('새 제품이 성공적으로 추가되었습니다!');
         }
 
         function manualRecord(id) {
@@ -454,9 +509,9 @@ async def serve_mobile_ui():
             closeEditModal();
 
             if(item.target_price && item.base_price <= item.target_price) {
-                alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달하여 지금이 최적의 구매시기입니다!');
+                showToast('🎯 희망 구매가 도달! 지금이 최적의 구매시기입니다.', false);
             } else {
-                alert('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
+                showToast('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
             }
         }
 
@@ -621,7 +676,6 @@ ${previousHistory}
                                 cardClass = "glass-card rounded-2xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all";
                             }
                             
-                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리, 스탬프는 강렬한 빨간색으로 별도 출력
                             if(item.is_bought) { cardClass += " grayscale opacity-60"; }
 
                             let finalPrice = item.base_price;
