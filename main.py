@@ -143,15 +143,15 @@ async def serve_mobile_ui():
         
         /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
-            0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
-            50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
-            100% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
+            0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
+            100% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
         }
-        .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
+        .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
 
         /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
+            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg);
             border: 4px dashed #dc2626; color: #dc2626; font-weight: 900; font-size: 2.2rem; padding: 6px 20px;
             letter-spacing: 4px; text-transform: uppercase; pointer-events: none; z-index: 30; opacity: 0.95;
             box-shadow: inset 0 0 15px rgba(220, 38, 38, 0.3), 0 0 25px rgba(220, 38, 38, 0.5); border-radius: 12px;
@@ -260,7 +260,7 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 제품 추가 모달 -->
+    <!-- 제품 추가 모달 (UI 세련화) -->
     <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-md rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
             <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
@@ -568,7 +568,7 @@ async def serve_mobile_ui():
             if(!isNaN(newTarget)) item.target_price = newTarget;
 
             const now = new Date();
-            item.last_updated = `${now.getMonth() + 1}월 ${now.getDate()}일 변동`;
+            item.last_updated = `${now.getMonth() + 1}월 ${now.getDate()}일`;
 
             saveAndRender();
             closeEditModal();
@@ -773,24 +773,26 @@ ${previousHistory}
                                         
                                         ${(isPurchaseTime && !item.is_bought) ? '<div class="my-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-[10px] font-black px-2 py-1 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)] animate-pulse whitespace-nowrap"><i class="fa-solid fa-bullseye"></i> 🎯 구매시기 도달! (최적가)</div>' : ''}
                                         
-                                        <div class="flex justify-between items-center mt-1.5">
-                                            ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono font-bold">희망가: ${item.target_price.toLocaleString()}원</div>` : '<div></div>'}
-                                            <div class="text-[9px] text-slate-400 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">${item.last_updated || '정보 없음'}</div>
-                                        </div>
+                                        ${item.target_price ? `<div class="mt-1.5 text-[10px] text-emerald-400 font-mono font-bold">희망가: ${item.target_price.toLocaleString()}원</div>` : '<div></div>'}
                                         ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-1 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30 w-fit"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
                                     </div>
                                     
-                                    <!-- 구매 및 가격 변경 버튼 위치 변경 (사진을 가리지 않고 하단에 독립 배치) -->
-                                    <div class="flex justify-between items-end mt-2.5 border-t border-slate-700/50 pt-2.5">
-                                        <div class="text-left flex-1 truncate">
-                                            ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through block mb-0.5">${item.base_price.toLocaleString()}원</span>` : ''}
+                                    <!-- 구매 및 가격 변경 버튼을 제품 정보 최하단으로 완전히 빼냄 (사진 간섭 X) -->
+                                    <div class="flex flex-col gap-2 mt-2.5 border-t border-slate-700/50 pt-2.5">
+                                        
+                                        <!-- 가격과 날짜가 한 줄에 나오도록 배치 -->
+                                        <div class="flex items-baseline gap-1.5">
+                                            ${item.is_deal && item.discount_rate > 0 ? `<span class="text-[9px] text-slate-400 line-through mr-1">${item.base_price.toLocaleString()}원</span>` : ''}
                                             <span class="text-sm font-mono font-black text-cyan-400 drop-shadow-md leading-none">${finalPrice.toLocaleString()}원</span>
+                                            <span class="text-[9px] text-slate-400 font-mono leading-none tracking-tight">${item.last_updated ? item.last_updated.replace(' 변동', '') : '등록일'}</span>
                                         </div>
-                                        <div class="flex gap-1.5 shrink-0" onclick="event.stopPropagation();">
-                                            <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-emerald-400/50 flex items-center gap-1">
-                                                <i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매'}
+
+                                        <!-- 알약 형태의 세련된 조작 버튼들 -->
+                                        <div class="flex gap-1.5" onclick="event.stopPropagation();">
+                                            <button onclick="toggleBuy(${item.id})" class="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 text-[10px] font-black px-2 py-1.5 rounded-md shadow-sm transition-all active:scale-95 border border-emerald-500/30 flex items-center justify-center gap-1 flex-1">
+                                                <i class="fa-solid fa-check"></i> ${item.is_bought ? '구매 취소' : '구매 완료'}
                                             </button>
-                                            <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-cyan-300/50 flex items-center gap-1">
+                                            <button onclick="manualRecord(${item.id})" class="bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-400 text-[10px] font-black px-2 py-1.5 rounded-md shadow-sm transition-all active:scale-95 border border-cyan-500/30 flex items-center justify-center gap-1 flex-1">
                                                 <i class="fa-solid fa-pen"></i> 수정
                                             </button>
                                         </div>
