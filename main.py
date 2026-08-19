@@ -95,6 +95,15 @@ async def serve_mobile_ui():
             100% { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.7); }
         }
         .urgent-border { animation: urgent-glow 1.5s infinite linear; border-width: 2px !important; }
+        
+        /* 구매시기 도달 시 반짝반짝 빛나는 에메랄드 글로우 효과 */
+        @keyframes purchase-glow {
+            0% { border-color: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+            50% { border-color: #34d399; box-shadow: 0 0 30px rgba(52, 211, 153, 0.9); }
+            100% { border-color: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+        }
+        .purchase-glow-card { animation: purchase-glow 1.5s infinite linear; border-width: 2px !important; }
+
         .buy-stamp {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg);
             border: 4px solid #ef4444; color: #ef4444; font-weight: 900; font-size: 2rem; padding: 4px 16px;
@@ -205,7 +214,7 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 가격 및 희망가 동시 수정 모달 (한번에 뜨는 방식) -->
+    <!-- 가격 및 희망가 동시 수정 모달 -->
     <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-sm rounded-3xl p-5 relative border border-slate-700 shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -271,7 +280,7 @@ async def serve_mobile_ui():
         let currentView = 'main';
         let currentFilter = '전체';
         let priceChartInstance = null;
-        let editingItemId = null; // 수정 중인 아이템 ID 추적
+        let editingItemId = null;
         const STORAGE_KEY = 'desk_setup_pro_v2_storage';
         const TOTAL_BUDGET = 1500000;
 
@@ -399,7 +408,6 @@ async def serve_mobile_ui():
             alert('새 제품이 성공적으로 추가되었습니다!');
         }
 
-        // 가격 변경 버튼 클릭 시 두번 팝업 대신 한 번에 입력하는 커스텀 모달 열기
         function manualRecord(id) {
             const item = items.find(i => i.id === id);
             if(!item) return;
@@ -430,7 +438,7 @@ async def serve_mobile_ui():
             closeEditModal();
 
             if(item.target_price && item.base_price <= item.target_price) {
-                alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달했습니다!');
+                alert('🎉 축하합니다! 설정하신 희망 구매가 이하로 가격이 도달하여 지금이 최적의 구매시기입니다!');
             } else {
                 alert('가격 및 희망 구매가와 변동 일자가 업데이트되었습니다.');
             }
@@ -581,7 +589,8 @@ ${previousHistory}
                             const amazonLink = `https://www.amazon.com/s?k=${encodeURIComponent(item.global_query)}`;
                             const aliLink = `https://ko.aliexpress.com/w/wholesale-${encodeURIComponent(item.global_query)}.html`;
 
-                            const isTargetReached = item.target_price && item.base_price <= item.target_price;
+                            // 구매시기 도달 여부 판별 (현재가 <= 희망구매가)
+                            const isPurchaseTime = item.target_price && item.base_price <= item.target_price;
 
                             let isUrgent = false;
                             if(item.is_deal && item.expires_at) {
@@ -590,8 +599,13 @@ ${previousHistory}
                                 if(diffHours > 0 && diffHours <= 12) { isUrgent = true; }
                             }
 
+                            // 카드 전체 빛나는 효과 (purchase-glow-card) 적용
                             let cardClass = "glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative border border-slate-800";
-                            if(isUrgent) { cardClass = "glass-card rounded-2xl overflow-hidden urgent-border flex flex-col justify-between relative"; }
+                            if(isUrgent) { 
+                                cardClass = "glass-card rounded-2xl overflow-hidden urgent-border flex flex-col justify-between relative"; 
+                            } else if(isPurchaseTime) {
+                                cardClass = "glass-card rounded-2xl overflow-hidden purchase-glow-card flex flex-col justify-between relative";
+                            }
                             if(item.is_bought) { cardClass += " grayscale opacity-60"; }
 
                             let finalPrice = item.base_price;
@@ -602,7 +616,7 @@ ${previousHistory}
                             return `
                             <div class="${cardClass}">
                                 ${item.is_bought ? '<div class="buy-stamp">BUY</div>' : ''}
-                                ${isTargetReached ? '<div class="absolute top-2 left-2 z-30 bg-emerald-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg animate-pulse">🎯 목표가 달성!</div>' : (isUrgent ? '<div class="absolute top-2 left-2 z-30 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce">⏰ 마감 12시간 전!</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2 left-2 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : ''))}
+                                ${isUrgent ? '<div class="absolute top-2 left-2 z-30 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce">⏰ 마감 12시간 전!</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2 left-2 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : '')}
                                 
                                 <div class="w-full h-32 bg-slate-900 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <img src="${item.image}" class="w-full h-full object-cover rounded-xl" alt="${item.name}" onerror="this.style.display='none';">
@@ -618,6 +632,10 @@ ${previousHistory}
                                 </div>
                                 <div class="p-3 cursor-pointer" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <h3 class="text-xs font-black text-white tracking-tight truncate">${item.name}</h3>
+                                    
+                                    <!-- 버튼들과 겹치지 않는 본문 영역에 배치된 구매시기 알람 배너 -->
+                                    ${isPurchaseTime ? '<div class="my-1 bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[9px] font-black px-2 py-1 rounded-lg flex items-center gap-1 shadow animate-pulse"><i class="fa-solid fa-bullseye"></i> 🎯 [구매시기 도달!] 지금 사기 좋은 때</div>' : ''}
+
                                     ${item.target_price ? `<div class="text-[10px] text-emerald-400 font-mono mt-0.5">희망 구매가: ${item.target_price.toLocaleString()}원</div>` : ''}
                                     <div class="text-[9px] text-slate-400 font-mono mt-0.5">최근 변동: ${item.last_updated || '정보 없음'}</div>
                                     ${item.is_deal && item.coupon_name ? `<div class="text-[10px] text-amber-300 font-bold truncate mt-0.5 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/30"><i class="fa-solid fa-ticket"></i> ${item.coupon_name}</div>` : ''}
