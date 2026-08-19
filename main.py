@@ -143,11 +143,11 @@ async def serve_mobile_ui():
         
         /* 구매시기 도달 화려한 네온 에메랄드 글로우 효과 */
         @keyframes glamorous-glow {
-            0% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
-            50% { border-color: #6ee7b7; box-shadow: 0 0 35px rgba(110, 231, 183, 1), inset 0 0 20px rgba(110, 231, 183, 0.6); }
-            100% { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.7), inset 0 0 10px rgba(52, 211, 153, 0.3); }
+            0% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 40px rgba(110, 231, 183, 1), inset 0 0 25px rgba(110, 231, 183, 0.7); }
+            100% { border-color: #34d399; box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), inset 0 0 15px rgba(52, 211, 153, 0.4); }
         }
-        .purchase-glow-card { animation: glamorous-glow 1.5s infinite ease-in-out; border-width: 2px !important; }
+        .purchase-glow-card { animation: glamorous-glow 1.2s infinite ease-in-out; border-width: 2.5px !important; }
 
         /* 강렬한 빨간색 리얼 스탬프 스타일 */
         .buy-stamp {
@@ -260,7 +260,7 @@ async def serve_mobile_ui():
         </div>
     </div>
 
-    <!-- 제품 추가 모달 (UI 세련화) -->
+    <!-- 제품 추가 모달 -->
     <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-md rounded-3xl p-6 relative border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-enter scrollbar-none" style="scrollbar-width: none;">
             <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
@@ -379,8 +379,6 @@ async def serve_mobile_ui():
             
             toast.classList.remove('hidden');
             toast.classList.remove('toast-enter');
-            
-            // 약간의 딜레이 후 애니메이션 재시작
             void toast.offsetWidth; 
             
             if(isSuccess) {
@@ -391,9 +389,7 @@ async def serve_mobile_ui():
                 toast.className = "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/95 border border-cyan-500/50 text-white px-5 py-3.5 rounded-full shadow-2xl backdrop-blur-xl text-[11px] font-black flex items-center gap-2.5 transition-all toast-enter";
             }
             
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
         }
 
         function editBudget() {
@@ -401,9 +397,7 @@ async def serve_mobile_ui():
             document.getElementById('budgetModal').classList.remove('hidden');
         }
 
-        function closeBudgetModal() {
-            document.getElementById('budgetModal').classList.add('hidden');
-        }
+        function closeBudgetModal() { document.getElementById('budgetModal').classList.add('hidden'); }
 
         function saveBudgetModal() {
             const val = Number(document.getElementById('budgetInputModal').value);
@@ -473,7 +467,7 @@ async def serve_mobile_ui():
                 item.is_bought = !item.is_bought;
                 saveAndRender();
                 if(item.is_bought) {
-                    showToast(`"${item.name}" 구매가 완료 처리되었습니다!`);
+                    showToast(`"${item.name}" 구매 완료! 스탬프가 찍혔습니다.`);
                 }
             }
         }
@@ -747,7 +741,6 @@ ${previousHistory}
                                 cardClass = "glass-card rounded-3xl overflow-hidden purchase-glow-card flex flex-col justify-between relative transition-all duration-300";
                             }
                             
-                            // 구매 완료 시 카드 자체는 모노톤 흑백 처리 (빨간 스탬프는 별도 유지)
                             if(item.is_bought) { cardClass += " grayscale opacity-70"; }
 
                             let finalPrice = item.base_price;
@@ -757,19 +750,24 @@ ${previousHistory}
 
                             return `
                             <div class="${cardClass}">
-                                <!-- 붉은색 강렬한 리얼 스탬프 디자인 -->
+                                <!-- 강렬한 붉은색 스탬프 디자인 -->
                                 ${item.is_bought ? '<div class="buy-stamp">BUY</div>' : ''}
                                 
+                                <!-- 타임딜 마감 배너 (우측 상단 하트와 겹치지 않도록 좌측 상단 유지) -->
                                 ${isUrgent ? '<div class="absolute top-2.5 left-2.5 z-30 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg animate-bounce">⏰ 마감임박</div>' : (item.is_deal && item.discount_rate > 0 ? `<div class="absolute top-2.5 left-2.5 z-20 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg">🔥 특가 -${item.discount_rate}%</div>` : '')}
                                 
                                 <div class="w-full h-32 bg-slate-900/90 overflow-hidden border-b border-slate-800/80 relative flex items-center justify-center p-2.5 cursor-pointer group" onclick='openChartModal(${JSON.stringify(item)})'>
                                     <img src="${item.image}" class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500" alt="${item.name}" onerror="this.style.display='none';">
-                                    <div class="absolute top-2.5 left-2.5 z-20" onclick="event.stopPropagation();">
+                                    
+                                    <!-- 위시리스트(하트) 우측 상단으로 이동하여 겹침 방지 -->
+                                    <div class="absolute top-2.5 right-2.5 z-20" onclick="event.stopPropagation();">
                                         <button onclick="toggleWishlist(${item.id})" class="bg-slate-950/80 hover:bg-slate-900 p-2 rounded-full shadow-md transition-all active:scale-95 border border-slate-800/50">
                                             <i class="fa-${item.is_wishlist ? 'solid text-rose-500' : 'regular text-slate-400'} fa-heart text-xs"></i>
                                         </button>
                                     </div>
-                                    <div class="absolute top-2.5 right-2.5 z-20 flex gap-1.5" onclick="event.stopPropagation();">
+                                    
+                                    <!-- 구매완료 & 가격변경 버튼 우측 하단으로 이동하여 겹침 완벽 해결 -->
+                                    <div class="absolute bottom-2.5 right-2.5 z-20 flex gap-1.5 w-full justify-end px-2.5" onclick="event.stopPropagation();">
                                         <button onclick="toggleBuy(${item.id})" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-emerald-400/50"><i class="fa-solid fa-check"></i> ${item.is_bought ? '취소' : '구매완료'}</button>
                                         <button onclick="manualRecord(${item.id})" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-[10px] font-black px-2 py-1.5 rounded-lg shadow-md transition-all active:scale-95 border border-cyan-300/50"><i class="fa-solid fa-pen"></i> 가격 변경</button>
                                     </div>
