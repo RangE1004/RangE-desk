@@ -33,10 +33,13 @@ async def ui():
 <body class="text-slate-100 pb-24 font-sans">
     <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur border-b border-slate-800 p-5">
         <h1 class="font-black text-white">데스크 셋업 프로 V2</h1>
-        <p class="text-[11px] text-slate-400">자산: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span> | 위시: <span id="wishTotal" class="text-purple-400 font-bold">0원</span></p>
+        <p class="text-[11px] text-slate-400">자산 총액: <span id="totalAsset" class="text-cyan-400 font-bold">0원</span></p>
     </header>
 
-    <div id="banner" class="m-4 p-3 rounded-xl bg-purple-900/30 border border-purple-500/30 text-[11px] hidden text-purple-200"></div>
+    <!-- 자동 리서치 배너 -->
+    <div id="banner" class="m-4 p-3 rounded-xl bg-purple-900/30 border border-purple-500/30 text-[11px] hidden text-purple-200">
+        <i class="fa-solid fa-robot"></i> <span id="bannerText">자동 리서치 중...</span>
+    </div>
 
     <div class="px-5 py-2 flex gap-2 overflow-x-auto">
         <button onclick="render('전체')" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-black">전체보기</button>
@@ -49,10 +52,10 @@ async def ui():
 
     <div id="modal" class="fixed inset-0 bg-black/80 hidden z-50 p-5 flex items-center justify-center">
         <div class="glass w-full p-5 rounded-2xl">
-            <h2 class="font-black mb-4">제품 추가</h2>
-            <input id="inName" placeholder="제품명" class="w-full bg-slate-900 p-2 rounded mb-2">
-            <input id="inPrice" type="number" placeholder="가격" class="w-full bg-slate-900 p-2 rounded mb-4">
-            <div class="flex gap-2"><button onclick="add()" class="bg-cyan-500 flex-1 py-2 rounded font-black">추가</button><button onclick="closeModal()" class="bg-slate-700 flex-1 py-2 rounded">취소</button></div>
+            <h2 class="font-black mb-4">새 제품 추가</h2>
+            <input id="inName" placeholder="제품명" class="w-full bg-slate-900 p-2 rounded mb-2 text-sm">
+            <input id="inPrice" type="number" placeholder="가격" class="w-full bg-slate-900 p-2 rounded mb-4 text-sm">
+            <div class="flex gap-2"><button onclick="add()" class="bg-cyan-500 flex-1 py-2 rounded font-black text-sm">추가</button><button onclick="closeModal()" class="bg-slate-700 flex-1 py-2 rounded text-sm">취소</button></div>
         </div>
     </div>
 
@@ -83,14 +86,14 @@ async def ui():
                         <div><h3 class="font-bold text-sm">${i.name}</h3><p class="text-[10px] text-slate-500">${i.sub}</p></div>
                         <span class="text-cyan-400 font-mono text-xs font-bold">${i.base_price.toLocaleString()}원</span>
                     </div>
-                    <div class="grid grid-cols-4 gap-1 text-center text-[10px]">
-                        <a href="https://search.shopping.naver.com/search/all?query=${i.name}" target="_blank" class="bg-green-500/20 text-green-400 p-1 rounded font-black">N</a>
-                        <a href="https://search.danawa.com/dsearch.php?query=${i.name}" target="_blank" class="bg-blue-500/20 text-blue-400 p-1 rounded font-black">D</a>
-                        <a href="https://www.amazon.com/s?k=${i.name}" target="_blank" class="bg-amber-500/20 text-amber-400 p-1 rounded font-black">Amz</a>
-                        <a href="https://ko.aliexpress.com/w/wholesale-${i.name}.html" target="_blank" class="bg-red-500/20 text-red-400 p-1 rounded font-black">Ali</a>
+                    <div class="grid grid-cols-4 gap-1 text-[9px] text-center">
+                        <a href="https://search.shopping.naver.com/search/all?query=${i.name}" target="_blank" class="bg-green-500/20 text-green-400 p-1 rounded font-black"><i class="fa-solid fa-n"></i></a>
+                        <a href="https://search.danawa.com/dsearch.php?query=${i.name}" target="_blank" class="bg-blue-500/20 text-blue-400 p-1 rounded font-black"><i class="fa-solid fa-d"></i></a>
+                        <a href="https://www.amazon.com/s?k=${i.name}" target="_blank" class="bg-amber-500/20 text-amber-400 p-1 rounded font-black"><i class="fa-brands fa-amazon"></i></a>
+                        <a href="https://ko.aliexpress.com/w/wholesale-${i.name}.html" target="_blank" class="bg-red-500/20 text-red-400 p-1 rounded font-black"><i class="fa-solid fa-bag-shopping"></i></a>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.open('https://www.perplexity.ai/search?q=${encodeURIComponent(i.name + ' 가격 분석')}')" class="bg-blue-600 flex-1 py-1 rounded text-[10px] font-black">AI 분석</button>
+                        <button onclick="window.open('https://www.perplexity.ai/search?q=${encodeURIComponent(i.name + ' 구매 분석')}')" class="bg-blue-600 flex-1 py-1 rounded text-[10px] font-black">AI 분석</button>
                         <button onclick="price(${i.id})" class="bg-slate-700 flex-1 py-1 rounded text-[10px]">가격 변경</button>
                     </div>
                 </div>
@@ -112,7 +115,12 @@ async def ui():
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function add() { items.push({id:Date.now(), name:document.getElementById('inName').value, base_price:Number(document.getElementById('inPrice').value), sub:"기타", category:"공용"}); closeModal(); save(); }
         
-        window.onload = () => { render(); fetch('/api/research/'+items[0].name).then(r=>r.json()).then(d=>{if(d.status==='success'){document.getElementById('banner').classList.remove('hidden'); document.getElementById('banner').innerText = d.result.substring(0,80);}}); };
+        window.onload = () => { 
+            render(); 
+            fetch('/api/research/'+items[0].name).then(r=>r.json()).then(d=>{
+                if(d.status==='success'){ document.getElementById('banner').classList.remove('hidden'); document.getElementById('banner').innerText = d.result.substring(0,80); }
+            }); 
+        };
     </script>
 </body>
 </html>
